@@ -1150,12 +1150,12 @@
         }
 
         // Якщо немає інтервалів — весь день зі світлом
-    if (!intervals.length) {
-        const seg = document.createElement("div");
-        seg.className = "timeline-segment on";
-        seg.style.flexBasis = "0%";
-        seg.style.flexGrow = duration;
-        timelineTrack.appendChild(seg);
+        if (!intervals.length) {
+            const seg = document.createElement("div");
+            seg.className = "timeline-segment on";
+            seg.style.flexBasis = "0";
+            seg.style.flexGrow = 24*60;
+            timelineTrack.appendChild(seg);
 
         slotsList.innerHTML = `<div style="font-size:12px;color:var(--text-muted);">На ${dayName} за графіком відключень не заплановано.</div>`;
         updateCountdown(null, dayMode);
@@ -1198,30 +1198,32 @@
             if (from > pointer) {
                 const duration = from - pointer;
                 const segOn = document.createElement("div");
-                segOn.className = "timeline-segment on";
-                segOn.style.flexBasis = `${duration}min`;
+                segOn.style.flexBasis = "0";
+                segOn.style.flexGrow = duration;
                 segOn.style.flexGrow = String(duration);
                 timelineTrack.appendChild(segOn);
             }
 
             // Відключення
+            const durationOff = to - from;
+
             const segOff = document.createElement("div");
             segOff.className = "timeline-segment off";
 
-            // не використовуємо min як одиницю ширини
+            // правильні стилі!
             segOff.style.flexBasis = "0";
             segOff.style.flexGrow = durationOff;
 
-            // тут ставимо мінімальну ширину для тексту
+            // мінімальна ширина — щоб не стискалося до 1px
             segOff.style.minWidth = "35px";
 
-            // і далі текст за потреби
+            // текст лише якщо є місце
             if (durationOff >= 120) {
                 segOff.textContent = `${intv.off}–${intv.on}`;
             }
 
-            
             timelineTrack.appendChild(segOff);
+
 
             // Список інтервалів
             const dur = to - from;

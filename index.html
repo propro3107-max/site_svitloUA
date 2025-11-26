@@ -502,6 +502,33 @@
 
         .timeline-track {
             position: relative;
+            height: 36px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #1f2937;
+        }
+
+        .timeline-bg {
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                #0003,
+                #0003 4px,
+                transparent 4px,
+                transparent 8px
+            );
+        }
+
+        #timelineFill {
+            position: absolute;
+            inset: 0;
+            display: flex;
+        }
+
+
+        .timeline-track {
+            position: relative;
             width: 100%;
             height: 32px;
             border-radius: var(--radius-pill);
@@ -771,6 +798,11 @@
             </button>
         </div>
     </header>
+
+    <div class="timeline-track">
+        <div class="timeline-bg"></div>
+        <div id="timelineFill"></div>
+    </div>
 
     <section class="hero-card">
         <div class="hero-main">
@@ -1136,18 +1168,24 @@
         let pointer = dayStart;
         
         // 💡 Виправлення: Вставляємо проміжок світла перед першим відключенням, якщо воно не з 00:00
-        if (intervals.length > 0) {
-         const firstOffTime = timeToMinutes(intervals[0].off);
-         if (firstOffTime > pointer) {
-             const duration = firstOffTime - pointer;
-             const segOn = document.createElement("div");
-             segOn.className = "timeline-segment on";
-             segOn.style.flexBasis = `${duration}min`;
-             segOn.style.flexGrow = String(duration);
-             timelineTrack.appendChild(segOn);
-             pointer = firstOffTime;
-         }
+    if (intervals.length > 0) {
+        const firstOffTime = timeToMinutes(intervals[0].off);
+
+        if (firstOffTime > pointer) {
+            const duration = firstOffTime - pointer;
+
+            const segOn = document.createElement("div");
+            segOn.className = "timeline-segment on";
+
+            // ✔️ Правильне формування пропорцій
+            segOn.style.flexBasis = "0";
+            segOn.style.flexGrow = duration;
+
+            timelineTrack.appendChild(segOn);
+            pointer = firstOffTime;
+        }
     }
+
 
 
         intervals.forEach((intv) => {

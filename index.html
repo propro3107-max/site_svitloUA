@@ -553,7 +553,6 @@
             transition: background-color 0.3s;
         }
 
-/* Загальний стиль шматка */
         .timeline-segment {
             height: 100%;
             display: flex;
@@ -569,15 +568,6 @@
             width: 0 !important; /* Ігноруємо контент, слухаємо тільки flex-grow */
         }
 
-        /* 🟢 СВІТЛО Є (Зелений) */
-        .timeline-segment.on {
-            background: var(--chart-on);
-            color: #fff !important; /* Теж білий текст */
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            box-shadow: inset -1px 0 0 rgba(255,255,255,0.2);
-        }
-
-        /* 🔴 СВІТЛА НЕМАЄ (Червоний + Білий текст) */
         .timeline-segment.off {
             /* Використовуємо !important, щоб перебити будь-які теми */
             background: #ef4444 !important; 
@@ -592,6 +582,14 @@
                 rgba(0,0,0,0.1) 5px, 
                 rgba(0,0,0,0.1) 10px
             );
+        }
+        
+        /* Зелений стиль теж перевір, щоб був таким: */
+        .timeline-segment.on {
+            background: var(--chart-on);
+            color: #fff !important; /* Теж білий текст */
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            box-shadow: inset -1px 0 0 rgba(255,255,255,0.2);
         }
 
         .timeline-now-indicator {

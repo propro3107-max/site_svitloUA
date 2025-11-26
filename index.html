@@ -573,11 +573,18 @@
             box-shadow: inset -1px 0 0 rgba(255,255,255,0.2);
         }
 
-        /* 🔴 СВІТЛА НЕМАЄ (Червоний) */
+        /* 🔴 СВІТЛА НЕМАЄ (Червоний + Білий текст) */
         .timeline-segment.off {
-            background: var(--chart-off);
-            /* Легка штриховка для краси */
+            background: #ef4444 !important; /* Яскравий червоний */
+            color: #ffffff !important;      /* Яскравий білий */
+            font-weight: 700;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8); /* Тінь щоб читалось */
+            
+            /* Технічні налаштування */
             background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px);
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
         }
 
         .timeline-now-indicator {
@@ -1125,6 +1132,7 @@
     // === 3. ПОБУДОВА ГРАФІКУ ===
 
     function makeTimeline(queue, dayMode) {
+        // Очистка
         if (countdownInterval) { cancelAnimationFrame(countdownInterval); }
         timelineTrack.innerHTML = "";
         slotsList.innerHTML = "";
@@ -1141,10 +1149,9 @@
             nowIndicator.style.display = "none";
         }
 
-        // Якщо немає відключень (весь день світло)
+        // Якщо світло весь день
         if (!intervals.length) {
             timelineTrack.innerHTML = `<div class="timeline-segment on" style="flex-grow:1">24 години світло</div>`;
-            // 🔴 ВИПРАВЛЕНО: Використовуємо клас "on", щоб підтягнулась темна тема
             slotsList.innerHTML = `
                 <div class="slot-row">
                     <div><div class="slot-time">00:00 – 24:00</div></div>
@@ -1154,27 +1161,29 @@
             return;
         }
 
-        let pointer = 0;
+        let pointer = 0; // СТАРТУЄМО З 00:00
 
         intervals.forEach((intv) => {
             const start = timeToMinutes(intv.off);
             const end = timeToMinutes(intv.on);
 
-            // СВІТЛО
+            // 🟢 КРОК 1: Чи є світло перед цим відключенням?
+            // Якщо відключення о 12:30, а pointer на 00:00, то duration = 750 хв світла
             if (start > pointer) {
                 const duration = start - pointer;
                 const timeLabel = `${minutesToTime(pointer)} – ${intv.off}`;
                 
+                // Малюємо ЗЕЛЕНИЙ шматок (відступ)
                 const segOn = document.createElement("div");
                 segOn.className = "timeline-segment on";
-                segOn.style.flexGrow = duration;
+                segOn.style.flexGrow = duration; // ЦЕ РОБИТЬ ВІДСТУП
                 if (duration > 50) segOn.textContent = timeLabel;
                 timelineTrack.appendChild(segOn);
 
                 addSlotToList(timeLabel, durationLabel(duration), true);
             }
 
-            // ВІДКЛЮЧЕННЯ
+            // 🔴 КРОК 2: Малюємо саме відключення
             const durationOff = end - start;
             const timeLabelOff = `${intv.off} – ${intv.on}`;
 
@@ -1186,10 +1195,10 @@
 
             addSlotToList(timeLabelOff, durationLabel(durationOff), false);
 
-            pointer = end;
+            pointer = end; // Пересуваємо вказівник на кінець відключення
         });
 
-        // ХВІСТ СВІТЛА
+        // 🟢 КРОК 3: Хвіст світла до кінця доби
         if (pointer < 1440) {
             const duration = 1440 - pointer;
             const timeLabel = `${minutesToTime(pointer)} – 00:00`;

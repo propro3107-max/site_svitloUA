@@ -552,6 +552,9 @@
         .timeline-segment.off {
             background: var(--timeline-off-bg);
             color: var(--timeline-off-color);
+            /* Прибираємо min-width, щоб графік був чесним */
+            min-width: 0; 
+            overflow: hidden; /* Ховаємо текст, якщо блок замалий */
         }
 
         .timeline-segment.on {
@@ -988,6 +991,7 @@
      */
     function parseGviz(jsonText) {
         try {
+            // Вирізаємо чистий JSON з відповіді Google
             const start = jsonText.indexOf("{");
             const end = jsonText.lastIndexOf("}");
             const json = JSON.parse(jsonText.substring(start, end + 1));
@@ -995,26 +999,35 @@
             let lastGroupId = null;
             const outputRows = [];
             
-            const GROUP_INDEX = COLUMN_GROUP_ID_INDEX;
-            const SCHEDULE_INDEX = COLUMN_SCHEDULE_TEXT_INDEX;
+            // Індекси колонок (A=0, B=1)
+            const GROUP_INDEX = 0; 
+            const SCHEDULE_INDEX = 1;
 
             json.table.rows.forEach(r => {
                 const rowData = r.c;
-                
-                // 💡 КРИТИЧНЕ ВИПРАВЛЕННЯ: Читаємо Group ID з поля 'f' (форматований рядок), оскільки тип 'date' збиває парсинг.
-                let currentGroupId = rowData[GROUP_INDEX] ? String(rowData[GROUP_INDEX].f || '').trim() : '';
-                
-                // Читаємо Schedule Text (колонка 1) з поля 'v' або 'f'
-                const scheduleText = rowData[SCHEDULE_INDEX] ? String(rowData[SCHEDULE_INDEX].v || rowData[SCHEDULE_INDEX].f || '').trim() : '';
+                if (!rowData) return; // Пропускаємо порожні рядки
 
-                // Логіка об'єднаних комірок: якщо ID порожній, використовуємо попередній
-                if (currentGroupId === '' && lastGroupId !== null) {
+                // 1. Безпечно дістаємо ID черги (перевіряємо чи існує об'єкт)
+                let currentGroupId = '';
+                if (rowData[GROUP_INDEX]) {
+                    // Беремо форматоване значення (f) або сире (v)
+                    currentGroupId = String(rowData[GROUP_INDEX].v || rowData[GROUP_INDEX].f || '').trim();
+                }
+                
+                // 2. Безпечно дістаємо текст розкладу
+                let scheduleText = '';
+                if (rowData[SCHEDULE_INDEX]) {
+                    scheduleText = String(rowData[SCHEDULE_INDEX].v || rowData[SCHEDULE_INDEX].f || '').trim();
+                }
+
+                // 3. Логіка об'єднаних комірок (якщо ID пустий — беремо попередній)
+                if ((currentGroupId === '' || currentGroupId === 'null') && lastGroupId !== null) {
                     currentGroupId = lastGroupId;
-                } else if (currentGroupId !== '') {
+                } else if (currentGroupId !== '' && currentGroupId !== 'null') {
                     lastGroupId = currentGroupId;
                 }
 
-                // Якщо є дійсний ID черги та розклад, додаємо рядок
+                // Додаємо, якщо є і ID, і текст
                 if (currentGroupId && scheduleText) {
                     outputRows.push({
                         [COLUMN_GROUP_ID]: currentGroupId,
@@ -1185,50 +1198,40 @@
 
 
 
-        intervals.forEach((intv) => {
+    intervals.forEach((intv) => {
             const from = timeToMinutes(intv.off);
             const to = timeToMinutes(intv.on);
 
-            // Якщо поточний інтервал починається пізніше, ніж закінчився попередній,
-            // вставляємо проміжок світла (3 години світла)
+            // 1. Світла зона ПЕРЕД відключенням
             if (from > pointer) {
                 const duration = from - pointer;
                 const segOn = document.createElement("div");
-                segOn.style.flexBasis = "0";
-                segOn.style.flexGrow = duration;
-                segOn.style.flexGrow = String(duration);
+                segOn.className = "timeline-segment on";
+                // Важливо: flex-grow пропорційно хвилинам
+                segOn.style.flexGrow = duration; 
                 timelineTrack.appendChild(segOn);
             }
 
-            // Відключення
+            // 2. Темна зона (ВІДКЛЮЧЕННЯ)
             const durationOff = to - from;
-
             const segOff = document.createElement("div");
             segOff.className = "timeline-segment off";
+            segOff.style.flexGrow = durationOff; // Пропорційна ширина
 
-            // правильні стилі!
-            segOff.style.flexBasis = "0";
-            segOff.style.flexGrow = durationOff;
-
-            // мінімальна ширина — щоб не стискалося до 1px
-            segOff.style.minWidth = "35px";
-
-            // текст лише якщо є місце
-            if (durationOff >= 120) {
+            // Текст показуємо, тільки якщо відключення довше 55 хвилин
+            if (durationOff >= 55) {
                 segOff.textContent = `${intv.off}–${intv.on}`;
             }
 
             timelineTrack.appendChild(segOff);
 
-
-            // Список інтервалів
-            const dur = to - from;
+            // 3. Додаємо в список знизу
             const rowEl = document.createElement("div");
             rowEl.className = "slot-row";
             rowEl.innerHTML = `
                 <div>
                     <div class="slot-time">${intv.off} – ${intv.on}</div>
-                    <div class="slot-duration">Тривалість: ${durationLabel(dur)}</div>
+                    <div class="slot-duration">Тривалість: ${durationLabel(durationOff)}</div>
                 </div>
                 <div class="slot-tag">Відключення</div>
             `;

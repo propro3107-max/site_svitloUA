@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>SvitloUA Київщина — графік відключень</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Light Theme Variables */
+            --bg-gradient: radial-gradient(circle at top left, #f8fbff 0, #edf4ff 30%, #f5f0ff 60%, #f9fafc 100%);
+            --primary: #2563eb;
+            --primary-soft: rgba(37,99,235,0.12);
+            --accent: #22c55e;
+            --danger: #ef4444;
+            --text-main: #0f172a;
+            --text-muted: #6b7280;
+            --surface: #ffffff;
+            --surface-soft: rgba(255,255,255,0.7);
+            --border-subtle: rgba(148,163,184,0.25);
+            --shadow-soft: 0 18px 45px rgba(15,23,42,0.10);
+            --timeline-bg: #e5e7eb;
+            --timeline-on: transparent;
+            --timeline-off-bg: linear-gradient(90deg, #0f172a, #111827);
+            --timeline-off-color: #f9fafb;
+            --countdown-bg: linear-gradient(145deg, #0f172a, #020617);
+            --countdown-color: #e5e7eb;
+
+            --radius-lg: 26px;
+            --radius-md: 14px;
+            --radius-pill: 999px;
+        }
+
+        /* Dark Theme Overrides */
+        body.dark-mode {
+            --bg-gradient: linear-gradient(135deg, #090a19 0%, #151928 100%);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --surface: #1e293b;
+            --surface-soft: rgba(30,41,59,0.7);
+            --border-subtle: rgba(255,255,255,0.12);
+            --shadow-soft: 0 18px 45px rgba(0,0,0,0.40);
+            --timeline-bg: #334155;
+            --timeline-on: transparent;
+            --timeline-off-bg: linear-gradient(90deg, #60a5fa, #3b82f6);
+            --timeline-off-color: #0f172a;
+            --countdown-bg: linear-gradient(145deg, #0f172a, #020617);
+            --countdown-color: #e5e7eb;
+        }
+
+        /* General Styles */
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0; padding: 0;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text-main);
+            background: var(--bg-gradient);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body { min-height: 100vh; display: flex; flex-direction: column; }
+        .page {
+            max-width: 1120px; margin: 0 auto; padding: 20px 16px 32px; flex-grow: 1;
+        }
+
+        /* HEADER */
+        .top-bar {
+            display: flex;
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap; 
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center; 
+            gap: 10px; 
+            flex-shrink: 0; 
+        }
+        
+        .region-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 11px;
+            border-radius: var(--radius-pill);
+            background: rgba(15,23,42,0.03);
+            border: 1px solid var(--border-subtle);
+            font-size: 11px;
+            color: var(--text-muted);
+            transition: background-color 0.3s;
+            flex-shrink: 0; 
+        }
+        
+        .dark-mode .region-chip {
+             background: rgba(255,255,255,0.05);
+        }
+
+        .region-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: var(--radius-pill);
+            background: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34,197,94,0.25);
+        }
+
+        .theme-switch {
+            border: none;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            line-height: 1;
+            transition: background-color 0.3s, color 0.3s;
+            flex-shrink: 0;
+        }
+        
+        .brand-logo {
+            width: 40px; height: 40px; border-radius: 14px;
+            background: radial-gradient(circle at 20% 0, #4ade80, #22c55e 35%, #15803d 100%);
+            display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 0 2px rgba(34,197,94,0.2), 0 16px 35px rgba(22,163,74,0.7);
+        }
+
+        .brand-logo svg {
+            width: 26px; height: 26px;
+        }
+
+        .brand-text {
+            display: flex; flex-direction: column; gap: 2px;
+        }
+
+        .brand-name {
+            font-weight: 700; font-size: 18px; letter-spacing: 0.02em;
+        }
+
+        .brand-sub {
+            font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em;
+        }
+        
+        /* HERO */
+
+        .hero-card {
+            background: linear-gradient(135deg, var(--surface-soft), var(--surface-soft));
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg);
+            padding: 22px 20px 20px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-subtle);
+            position: relative;
+            overflow: hidden;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .dark-mode .hero-card {
+            background: linear-gradient(135deg, rgba(30,41,59,0.92), rgba(30,41,59,0.9));
+        }
+
+        .hero-card::before {
+            content: "";
+            position: absolute;
+            right: -40px;
+            top: -60px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(59,130,246,0.14), transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-main {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .hero-title {
+            font-size: 28px;
+            line-height: 1.2;
+            font-weight: 700;
+            max-width: 560px;
+        }
+
+        .hero-title span {
+            color: var(--primary);
+        }
+
+        .hero-subline {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 480px;
+        }
+
+        .hero-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .primary-btn {
+            border: none;
+            outline: none;
+            cursor: pointer;
+            border-radius: var(--radius-pill);
+            padding: 11px 18px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 16px 35px rgba(37,99,235,0.35);
+        }
+
+        .primary-btn:hover {
+             opacity: 0.9;
+        }
+
+        .primary-btn span.icon {
+            display: inline-flex;
+            width: 20px;
+            height: 20px;
+            border-radius: var(--radius-pill);
+            background: rgba(255,255,255,0.18);
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .secondary-pill {
+            font-size: 12px;
+            padding: 7px 11px;
+            border-radius: var(--radius-pill);
+            border: 1px dashed var(--text-muted);
+            background: var(--surface-soft);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        
+        .dark-mode .secondary-pill {
+             border-color: rgba(255,255,255,0.3);
+        }
+
+        .secondary-pill strong {
+            font-weight: 600;
+            color: var(--text-main);
+            transition: color 0.3s;
+        }
+
+        .hero-footer {
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .hero-footer span.badge {
+            padding: 5px 9px;
+            border-radius: var(--radius-pill);
+            background: rgba(22,163,74,0.08);
+            border: 1px solid rgba(22,163,74,0.16);
+            color: #15803d;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .dark-mode .hero-footer span.badge {
+             background: rgba(22,163,74,0.25);
+             border-color: rgba(22,163,74,0.5);
+             color: #dcfce7;
+        }
+
+        .hero-footer span.badge svg {
+            width: 13px;
+            height: 13px;
+        }
+        
+        .dark-mode .hero-footer span.badge svg path {
+             fill: #dcfce7 !important;
+        }
+        
+        .dark-mode .hero-footer span.badge svg path:nth-child(2) {
+             fill: #22c55e !important;
+        }
+
+
+        /* GRID MAIN */
+
+        .main-grid {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.2fr);
+            gap: 18px;
+            align-items: flex-start;
+        }
+
+        /* CARD (NEXT OUTAGE / LEGEND / TIMELINE) */
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 16px 16px 14px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-soft);
+            transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .chip {
+            padding: 4px 8px;
+            border-radius: var(--radius-pill);
+            font-size: 11px;
+            background: rgba(37,99,235,0.08);
+            color: #1d4ed8;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .dark-mode .chip {
+            background: rgba(59,130,246,0.3);
+            color: #bfdbfe;
+        }
+
+        .countdown {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .countdown-block {
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 10px 8px;
+            border-radius: 16px;
+            background: var(--countdown-bg);
+            color: var(--countdown-color);
+            text-align: center;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .countdown-value {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+        }
+
+        .countdown-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            opacity: .7;
+        }
+
+        .next-info {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .next-info strong {
+            color: var(--text-main);
+            transition: color 0.3s;
+        }
+
+        /* QUEUE SELECTOR */
+
+        .queue-select {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding: 8px 28px 8px 12px;
+            border-radius: var(--radius-pill);
+            border: 1px solid rgba(148,163,184,0.7);
+            font-size: 13px;
+            background: var(--surface-soft);
+            color: var(--text-main);
+            outline: none;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .dark-mode select {
+             border-color: rgba(255,255,255,0.3);
+             background: #1e293b;
+        }
+
+        .select-wrapper::after {
+            content: "▾";
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        /* TIMELINE */
+
+        .timeline-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 14px 14px 10px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-soft);
+            transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .timeline-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .day-tabs {
+            display: inline-flex;
+            padding: 3px;
+            border-radius: var(--radius-pill);
+            background: rgba(148,163,184,0.1);
+            transition: background-color 0.3s;
+        }
+        
+        .dark-mode .day-tabs {
+             background: rgba(255,255,255,0.1);
+        }
+
+        .day-tab {
+            border: none;
+            background: transparent;
+            padding: 5px 10px;
+            border-radius: var(--radius-pill);
+            font-size: 11px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+        }
+
+        .day-tab.active {
+            background: var(--surface);
+            color: var(--text-main);
+            font-weight: 600;
+            box-shadow: 0 1px 4px rgba(15,23,42,0.2);
+        }
+        
+        .dark-mode .day-tab.active {
+             box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+
+        .timeline-track {
+            position: relative;
+            width: 100%;
+            height: 32px;
+            border-radius: var(--radius-pill);
+            background: var(--timeline-bg);
+            overflow: hidden;
+            display: flex;
+            transition: background-color 0.3s;
+        }
+
+        .timeline-segment {
+            position: relative;
+            height: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            white-space: nowrap;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .timeline-segment.off {
+            background: var(--timeline-off-bg);
+            color: var(--timeline-off-color);
+        }
+
+        .timeline-segment.on {
+            background: var(--timeline-on);
+            color: transparent;
+        }
+
+        .timeline-now-indicator {
+            position: absolute;
+            top: -4px;
+            width: 2px;
+            height: 40px;
+            border-radius: var(--radius-pill);
+            background: var(--danger);
+            box-shadow: 0 0 0 3px rgba(248,113,113,0.5);
+        }
+
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .slots-list {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .slot-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 6px;
+        }
+        
+        .slots-list > .slot-row:last-child {
+             border-bottom: none;
+        }
+
+        .slot-time {
+            font-weight: 600;
+        }
+
+        .slot-duration {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .slot-tag {
+            padding: 3px 7px;
+            border-radius: var(--radius-pill);
+            font-size: 10px;
+            background: rgba(15,23,42,0.04);
+            color: var(--text-muted);
+            transition: background-color 0.3s;
+        }
+        
+        .dark-mode .slot-tag {
+             background: rgba(255,255,255,0.1);
+        }
+
+        /* SIDE CARD: LEGEND, INFO */
+
+        .info-list {
+            margin-top: 6px;
+            padding-left: 18px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .legend {
+            margin-top: 8px;
+            display: grid;
+            grid-template-columns: minmax(0,1fr);
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-dot.on {
+            background: var(--timeline-bg);
+        }
+
+        .legend-dot.off {
+            background: var(--timeline-off-bg);
+        }
+
+        .support-section {
+            margin-top: 10px;
+            padding-top: 9px;
+            border-top: 1px dashed rgba(148,163,184,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+        }
+        
+        .dark-mode .support-section {
+             border-top-color: rgba(255,255,255,0.3);
+        }
+
+
+        .support-btn {
+            border-radius: var(--radius-pill);
+            padding: 9px 12px;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #ecfdf5;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .support-btn:hover {
+            opacity: 0.9;
+        }
+
+        .support-btn span.icon {
+            font-size: 15px;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 840px) {
+            
+            /* 💡 ВИПРАВЛЕННЯ ШАПКИ (MOBILE) */
+            .top-bar {
+                align-items: flex-start;
+                flex-direction: column; /* Вертикальне розміщення: Лого зверху, керування знизу */
+                min-height: 50px; 
+                box-sizing: border-box;
+            }
+            
+            .header-controls {
+                width: 100%; /* Займає повну ширину, щоб елементи могли розміститися */
+                justify-content: space-between; /* Розносить чип і кнопку по краях */
+                margin-top: 10px; /* Додаємо відступ від логотипу */
+                min-height: 30px;
+            }
+
+            .hero-card {
+                padding: 18px 16px 16px;
+            }
+
+            .hero-title {
+                font-size: 22px;
+            }
+
+            .main-grid {
+                grid-template-columns: minmax(0,1fr);
+            }
+
+            .countdown-block {
+                padding: 8px 6px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .primary-btn {
+                justify-content: center;
+                width: 100%;
+            }
+
+            .queue-select {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <header class="top-bar">
+        <div class="brand">
+            <div class="brand-logo" aria-hidden="true">
+                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fefce8"/>
+                            <stop offset="45%" stop-color="#facc15"/>
+                            <stop offset="100%" stop-color="#f97316"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="20" cy="20" r="18" fill="rgba(15,23,42,0.35)"/>
+                    <circle cx="20" cy="20" r="13" fill="url(#boltGrad)"/>
+                    <path d="M22.8 8.5 13.2 22.1c-.4.6 0 1.4.7 1.4h4.3l-1.0 7.9c-.1.9.9 1.4 1.5.7l9.5-13.9c.4-.6 0-1.4-.7-1.4h-4.3l1.1-7.7c.1-.9-.9-1.5-1.5-.8z"
+                          fill="#f97316" opacity="0.22"/>
+                    <path d="M22.2 9.5 14 21.4c-.5.7 0 1.6.8 1.6h3.9l-1.0 6.6c-.2 1 1 1.6 1.7.8L27.7 19c.5-.7 0-1.6-.8-1.6H23l1.0-6.2c.3-1-0.9-1.8-1.8-1.1z"
+                          fill="url(#boltGrad)"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <div class="brand-name">SvitloUA</div>
+                <div class="brand-sub">Київщина</div>
+            </div>
+        </div>
+
+        <div class="header-controls"> 
+            <div class="region-chip">
+                <span class="region-dot"></span>
+                Київська область • онлайн-графік
+            </div>
+            <button class="theme-switch" id="themeToggle" title="Перемкнути тему">
+                🌙
+            </button>
+        </div>
+    </header>
+
+    <section class="hero-card">
+        <div class="hero-main">
+            <h1 class="hero-title">
+                Графік відключень електроенергії у <span>Київській області</span>
+            </h1>
+            <p class="hero-subline">
+                Обирайте свою чергу — отримуйте зрозумілий графік відключень, таймер до наступного
+                відключення та наочну шкалу на 24&nbsp;години.
+            </p>
+
+            <div class="hero-controls">
+                <button class="primary-btn" type="button">
+                    <span class="icon">⚡</span>
+                    Підключити сповіщення
+                </button>
+
+                <div class="secondary-pill">
+                    Сьогодні: <strong id="currentQueueLabel">1.1 черга</strong>
+                    <span style="opacity:.7;">• дані оновлюються з Google Sheets</span>
+                </div>
+            </div>
+
+            <div class="hero-footer">
+                <span class="badge">
+                    <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 1.5 4 3.5v5.6c0 3.6 2.5 6.9 6 7.9 3.5-1 6-4.3 6-7.9V3.5L10 1.5z"
+                              fill="#bbf7d0"/>
+                        <path d="M10 3 5.5 4.5v4.5C5.5 11.9 7.3 14.1 10 15c2.7-.9 4.5-3.1 4.5-6V4.5L10 3z"
+                              fill="#22c55e"/>
+                        <path d="M9.1 11.5 7.3 9.7l.9-.9 1 1 3-3 .9.9-3.9 3.8z" fill="#f0fdf4"/>
+                    </svg>
+                    Дані неофіційні, але максимально близькі до реальності
+                </span>
+                <span>Базується на відкритій таблиці Google Sheets. Фактичні відключення можуть відрізнятися через аварії та екстрені обмеження.</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="main-grid">
+        <div class="timeline-card">
+            <div class="timeline-header">
+                <div class="timeline-title">Відключення сьогодні</div>
+                <div class="day-tabs" id="dayTabs">
+                    <button class="day-tab active" data-day="today">Сьогодні</button>
+                    <button class="day-tab" data-day="tomorrow">Завтра</button>
+                </div>
+            </div>
+
+            <div class="queue-select">
+                <div class="select-wrapper">
+                    <select id="queueSelect">
+                        <option value="1.1">1 черга (1 підгрупа)</option>
+                        <option value="1.2">1 черга (2 підгрупа)</option>
+                        <option value="2.1">2 черга (1 підгрупа)</option>
+                        <option value="2.2">2 черга (2 підгрупа)</option>
+                        <option value="3.1">3 черга (1 підгрупа)</option>
+                        <option value="3.2">3 черга (2 підгрупа)</option>
+                        <option value="4.1">4 черга (1 підгрупа)</option>
+                        <option value="4.2">4 черга (2 підгрупа)</option>
+                        <option value="5.1">5 черга (1 підгрупа)</option>
+                        <option value="5.2">5 черга (2 підгрупа)</option>
+                        <option value="6.1">6 черга (1 підгрупа)</option>
+                        <option value="6.2">6 черга (2 підгрупа)</option>
+                    </select>
+                </div>
+
+                <span style="font-size:12px;color:var(--text-muted);">
+                    Графік підтягується з таблиці Google — оновлення кожні кілька хвилин.
+                </span>
+            </div>
+
+            <div style="margin-top:12px;">
+                <div class="timeline-track">
+                    <div id="timelineTrack"></div>
+                    <div class="timeline-now-indicator" id="nowIndicator" style="display:none;"></div>
+                </div>
+                <div class="timeline-labels">
+                    <span>00:00</span>
+                    <span>06:00</span>
+                    <span>12:00</span>
+                    <span>18:00</span>
+                    <span>24:00</span>
+                </div>
+            </div>
+
+            <div class="slots-list" id="slotsList">
+                </div>
+        </div>
+
+        <aside class="card">
+            <div class="card-header">
+                <div class="card-title">Найближче відключення</div>
+                <div class="chip" id="queueShortLabel">1.1 черга</div>
+            </div>
+
+            <div class="countdown" id="countdownBox">
+                <div class="countdown-block">
+                    <div class="countdown-value" id="cdHours">--</div>
+                    <div class="countdown-label">год</div>
+                </div>
+                <div class="countdown-block">
+                    <div class="countdown-value" id="cdMinutes">--</div>
+                    <div class="countdown-label">хв</div>
+                </div>
+                <div class="countdown-block">
+                    <div class="countdown-value" id="cdSeconds">--</div>
+                    <div class="countdown-label">сек</div>
+                </div>
+            </div>
+
+            <div class="next-info" id="nextInfoText">
+                Очікуємо дані з таблиці…
+            </div>
+
+            <ul class="info-list">
+                <li>Графік є орієнтовним. При екстрених відключеннях час може зміщуватися.</li>
+                <li>Місцеві аварії (обриви, пошкодження кабелів, роботи ЖЕКів) тут не відображаються.</li>
+            </ul>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="legend-dot off"></span>
+                    <span>Темна ділянка — немає електроенергії</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot on"></span>
+                    <span>Світла ділянка — електроенергія присутня</span>
+                </div>
+            </div>
+
+            <div class="support-section">
+                <div>Якщо у вас є світло — будь ласка, використовуйте електроенергію розумно. Не вмикайте потужні прилади одночасно.</div>
+                <button class="support-btn" type="button" onclick="window.open('https://send.monobank.ua', '_blank')">
+                    <span class="icon">💚</span>
+                    Підтримати проєкт SvitloUA
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <footer>
+        <span>© <span id="year"></span> SvitloUA Київщина. Неофіційний сервіс для зручного перегляду графіків.</span>
+        <span>Джерело графіків: <a href="https://docs.google.com/spreadsheets/d/1LZWXZ6w5R4Lq5afipAa1YHjLyO8lVizPvRCPdOvdmbc" target="_blank" rel="noopener noreferrer">Google Sheets</a></span>
+    </footer>
+</div>
+
+<script>
+    const SHEET_ID = "1LZWXZ6w5R4Lq5afipAa1YHjLyO8lVizPvRCPdOvdmbc"; // ⚠️ ПЕРЕВІРТЕ ЦЕЙ ID!
+   const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+    // Імена колонок у вашій таблиці
+    const COLUMN_GROUP_ID_INDEX = 0;
+    const COLUMN_SCHEDULE_TEXT_INDEX = 1;
+    const COLUMN_GROUP_ID = "group_id";
+    const COLUMN_SCHEDULE_TEXT = "schedule_text";
+
+    const dayNamesUa = ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "Пʼятниця", "Субота"];
+
+    let allRows = [];          // Сирі рядки з таблиці (як об'єкти)
+    let currentQueue = "1.1";
+    let currentDayMode = "today"; // today / tomorrow
+
+    const timelineTrack = document.getElementById("timelineTrack");
+    const nowIndicator = document.getElementById("nowIndicator");
+    const slotsList = document.getElementById("slotsList");
+
+    const cdH = document.getElementById("cdHours");
+    const cdM = document.getElementById("cdMinutes");
+    const cdS = document.getElementById("cdSeconds");
+    const nextInfo = document.getElementById("nextInfoText");
+
+    const queueSelect = document.getElementById("queueSelect");
+    const queueShortLabel = document.getElementById("queueShortLabel");
+    const currentQueueLabel = document.getElementById("currentQueueLabel");
+    const body = document.body;
+    const themeToggle = document.getElementById("themeToggle");
+    
+    let countdownInterval = null;
+
+    // === Допоміжні функції ===
+
+    /**
+     * 💡 ВИПРАВЛЕНО: Парсинг Gviz з урахуванням індексів колонок (0 і 1)
+     * та заповненням порожніх group_id (логіка об'єднаних комірок).
+     */
+    function parseGviz(jsonText) {
+        try {
+            const start = jsonText.indexOf("{");
+            const end = jsonText.lastIndexOf("}");
+            const json = JSON.parse(jsonText.substring(start, end + 1));
+            
+            let lastGroupId = null;
+            const outputRows = [];
+            
+            const GROUP_INDEX = COLUMN_GROUP_ID_INDEX;
+            const SCHEDULE_INDEX = COLUMN_SCHEDULE_TEXT_INDEX;
+
+            json.table.rows.forEach(r => {
+                const rowData = r.c;
+                
+                // 💡 КРИТИЧНЕ ВИПРАВЛЕННЯ: Читаємо Group ID з поля 'f' (форматований рядок), оскільки тип 'date' збиває парсинг.
+                let currentGroupId = rowData[GROUP_INDEX] ? String(rowData[GROUP_INDEX].f || '').trim() : '';
+                
+                // Читаємо Schedule Text (колонка 1) з поля 'v' або 'f'
+                const scheduleText = rowData[SCHEDULE_INDEX] ? String(rowData[SCHEDULE_INDEX].v || rowData[SCHEDULE_INDEX].f || '').trim() : '';
+
+                // Логіка об'єднаних комірок: якщо ID порожній, використовуємо попередній
+                if (currentGroupId === '' && lastGroupId !== null) {
+                    currentGroupId = lastGroupId;
+                } else if (currentGroupId !== '') {
+                    lastGroupId = currentGroupId;
+                }
+
+                // Якщо є дійсний ID черги та розклад, додаємо рядок
+                if (currentGroupId && scheduleText) {
+                    outputRows.push({
+                        [COLUMN_GROUP_ID]: currentGroupId,
+                        [COLUMN_SCHEDULE_TEXT]: scheduleText
+                    });
+                }
+            });
+            
+            return outputRows;
+
+        } catch (e) {
+            console.error("Помилка парсингу Gviz JSON:", e);
+            return [];
+        }
+    }
+
+
+    function timeToMinutes(t) {
+        const [h, m] = t.split(":").map(Number);
+        // Обробка випадку 24:00 (наприклад, 24:00)
+        if (h === 24) return 24 * 60;
+        return h * 60 + m;
+    }
+
+    function minutesToTime(min) {
+        const h = Math.floor(min / 60);
+        const m = min % 60;
+        return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    }
+
+    function durationLabel(min) {
+        const h = Math.floor(min / 60);
+        const m = min % 60;
+        if (min < 0) return "Помилка";
+        if (h === 0 && m === 0) return "0 хв";
+        if (!h) return `${m} хв`;
+        if (!m) return `${h} год`;
+        return `${h} год ${m} хв`;
+    }
+
+        function parseTimesString(scheduleText, targetDayName) {
+            if (!scheduleText || typeof scheduleText !== "string") return [];
+
+            let dayTimesString = "";
+
+            const dayRegex = new RegExp(`${targetDayName}\\s*:\\s*([^\\n]+)`, 'i');
+            const match = scheduleText.match(dayRegex);
+
+            if (match && match[1]) {
+                dayTimesString = match[1].trim();
+            }
+
+            if (!dayTimesString || dayTimesString === '-') return [];
+
+            dayTimesString = dayTimesString
+                .replace(/\+/g, '')
+                .split(',')
+                .map(part => part.trim())
+                .filter(Boolean)
+                .map(part => {
+                    const parts = part.split('-').map(s => s.trim());
+                    if (parts.length !== 2) return null;
+
+                    const [from, to] = parts;
+
+                    if (!/^\d{2}:\d{2}$/.test(from) || !/^\d{2}:\d{2}$/.test(to)) return null;
+
+                    if (timeToMinutes(to) < timeToMinutes(from) &&
+                        to !== '00:00' && to !== '24:00') return null;
+
+                    return { off: from, on: to };
+                })
+                .filter(Boolean)
+                .sort((a, b) => timeToMinutes(a.off) - timeToMinutes(b.off));
+
+            return dayTimesString;
+        }
+
+
+    function getTodayTomorrowNames() {
+        const now = new Date();
+        const todayIdx = now.getDay();
+        const tomorrowIdx = (todayIdx + 1) % 7;
+        return {
+            todayName: dayNamesUa[todayIdx],
+            tomorrowName: dayNamesUa[tomorrowIdx]
+        };
+    }
+
+    function filterRowsFor(queue, dayMode) {
+        const { todayName, tomorrowName } = getTodayTomorrowNames();
+        const targetDayName = (dayMode === "today") ? todayName : tomorrowName;
+        
+        const row = allRows.find(r => String(r[COLUMN_GROUP_ID]).trim() === String(queue).trim());
+        
+        if (!row) {
+             console.log(`Рядок для черги ${queue} не знайдено в завантажених даних.`);
+             return { intervals: [], dayName: targetDayName };
+        }
+
+        const scheduleText = row[COLUMN_SCHEDULE_TEXT] || "";
+        const normalized = scheduleText.replace(/\r/g, "");
+        const intervals = parseTimesString(normalized, targetDayName);
+
+        if (!intervals.length) {
+             console.log(`Для черги ${queue} на ${targetDayName} не знайдено дійсних інтервалів.`);
+        }
+
+        return { intervals, dayName: targetDayName };
+    }
+
+    function makeTimeline(queue, dayMode) {
+        if (countdownInterval) { cancelAnimationFrame(countdownInterval); }
+        
+        const { intervals, dayName } = filterRowsFor(queue, dayMode);
+
+        timelineTrack.innerHTML = "";
+        slotsList.innerHTML = "";
+        
+        const now = new Date();
+        const totalMinutesNow = now.getHours() * 60 + now.getMinutes();
+        const posPercent = (totalMinutesNow / (24 * 60)) * 100;
+        
+        if (dayMode === "today") {
+            nowIndicator.style.left = `${posPercent}%`;
+            nowIndicator.style.display = "block";
+        } else {
+            nowIndicator.style.display = "none";
+        }
+
+        // Якщо немає інтервалів — весь день зі світлом
+    if (!intervals.length) {
+        const seg = document.createElement("div");
+        seg.className = "timeline-segment on";
+        seg.style.flexBasis = "100%";
+        seg.style.flexGrow = "1";
+        timelineTrack.appendChild(seg);
+
+        slotsList.innerHTML = `<div style="font-size:12px;color:var(--text-muted);">На ${dayName} за графіком відключень не заплановано.</div>`;
+        updateCountdown(null, dayMode);
+        return;
+    }
+
+        // Будуємо 24 години як чергування on/off
+        const dayStart = 0;
+        const dayEnd = 24 * 60;
+
+        let pointer = dayStart;
+        
+        // 💡 Виправлення: Вставляємо проміжок світла перед першим відключенням, якщо воно не з 00:00
+        if (intervals.length > 0) {
+         const firstOffTime = timeToMinutes(intervals[0].off);
+         if (firstOffTime > pointer) {
+             const duration = firstOffTime - pointer;
+             const segOn = document.createElement("div");
+             segOn.className = "timeline-segment on";
+             segOn.style.flexBasis = `${duration}min`;
+             segOn.style.flexGrow = String(duration);
+             timelineTrack.appendChild(segOn);
+             pointer = firstOffTime;
+         }
+    }
+
+
+        intervals.forEach((intv) => {
+            const from = timeToMinutes(intv.off);
+            const to = timeToMinutes(intv.on);
+
+            // Якщо поточний інтервал починається пізніше, ніж закінчився попередній,
+            // вставляємо проміжок світла (3 години світла)
+            if (from > pointer) {
+                const duration = from - pointer;
+                const segOn = document.createElement("div");
+                segOn.className = "timeline-segment on";
+                segOn.style.flexBasis = `${duration}min`;
+                segOn.style.flexGrow = String(duration);
+                timelineTrack.appendChild(segOn);
+            }
+
+            // Відключення
+            const durationOff = to - from;
+            const segOff = document.createElement("div");
+            segOff.className = "timeline-segment off";
+            segOff.style.flexBasis = `${durationOff}min`;
+            segOff.style.flexGrow = String(durationOff);
+            
+            if (durationOff >= 90) { 
+                segOff.textContent = `${intv.off}–${intv.on}`;
+            } else if (durationOff > 30) {
+                segOff.textContent = `${intv.off}–...`;
+            }
+            
+            timelineTrack.appendChild(segOff);
+
+            // Список інтервалів
+            const dur = to - from;
+            const rowEl = document.createElement("div");
+            rowEl.className = "slot-row";
+            rowEl.innerHTML = `
+                <div>
+                    <div class="slot-time">${intv.off} – ${intv.on}</div>
+                    <div class="slot-duration">Тривалість: ${durationLabel(dur)}</div>
+                </div>
+                <div class="slot-tag">Відключення</div>
+            `;
+            slotsList.appendChild(rowEl);
+
+            pointer = to;
+        });
+
+        // Світло до кінця доби
+        if (pointer < dayEnd) {
+            const duration = dayEnd - pointer;
+            const segOnTail = document.createElement("div");
+            segOnTail.className = "timeline-segment on";
+            segOnTail.style.flexBasis = `${duration}min`;
+            segOnTail.style.flexGrow = String(duration);
+            timelineTrack.appendChild(segOnTail);
+        }
+
+        updateCountdown(intervals, dayMode);
+    }
+
+    function updateCountdown(intervals, dayMode) {
+        
+        if (countdownInterval) { cancelAnimationFrame(countdownInterval); }
+
+        if (dayMode !== "today" || !intervals || !intervals.length) {
+            cdH.textContent = "--"; cdM.textContent = "--"; cdS.textContent = "--";
+            if (dayMode !== "today") {
+                 nextInfo.textContent = `Для ${getTodayTomorrowNames().tomorrowName} таймер не відображається.`;
+            } else {
+                 nextInfo.textContent = "Сьогодні за графіком відключень немає. Можливі лише аварії або екстрені обмеження.";
+            }
+            return;
+        }
+
+        const now = new Date();
+        const totalNow = now.getHours() * 60 + now.getMinutes();
+        let nextOff = null;
+
+        for (const intv of intervals) {
+            const start = timeToMinutes(intv.off);
+            if (start > totalNow) {
+                nextOff = start;
+                break;
+            }
+        }
+        
+        if (nextOff === null) {
+            cdH.textContent = "00"; cdM.textContent = "00"; cdS.textContent = "00";
+            nextInfo.textContent = "На сьогодні заплановані відключення вже завершилися.";
+            return;
+        }
+
+        function tick() {
+            const now = new Date();
+            const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            const targetSec = nextOff * 60;
+            let diff = targetSec - nowSec;
+
+            if (diff <= 0) {
+                cdH.textContent = "00"; cdM.textContent = "00"; cdS.textContent = "00";
+                nextInfo.textContent = "За графіком відключення має розпочатися буквально зараз.";
+                setTimeout(() => makeTimeline(currentQueue, currentDayMode), 1000);
+                return;
+            }
+
+            const hours = Math.floor(diff / 3600);
+            diff %= 3600;
+            const minutes = Math.floor(diff / 60);
+            const seconds = diff % 60;
+
+            cdH.textContent = String(hours).padStart(2, "0");
+            cdM.textContent = String(minutes).padStart(2, "0");
+            cdS.textContent = String(seconds).padStart(2, "0");
+
+            nextInfo.textContent = `Найближче відключення сьогодні о ${minutesToTime(nextOff)} (за графіком).`;
+            
+            countdownInterval = requestAnimationFrame(tick);
+        }
+
+        countdownInterval = requestAnimationFrame(tick);
+    }
+    
+    // === Функції Dark Mode ===
+    
+    function setDarkMode(isDark) {
+        if (isDark) {
+            body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️'; 
+            localStorage.setItem('theme', 'dark');
+        } else {
+            body.classList.remove('dark-mode');
+            themeToggle.textContent = '🌙'; 
+            localStorage.setItem('theme', 'light');
+        }
+    }
+    
+    function toggleDarkMode() {
+        const isDark = body.classList.contains('dark-mode');
+        setDarkMode(!isDark);
+    }
+
+    /**
+     * Оновлює елемент <select> на основі завантажених даних.
+     * @param {Array<Object>} rows Масив рядків даних.
+     */
+    function updateQueueSelector(rows) {
+        const selector = document.getElementById('queueSelect');
+        
+        // 💡 КРИТИЧНЕ ВИПРАВЛЕННЯ: Повністю очищаємо список перед заповненням.
+        selector.innerHTML = ''; 
+        
+        const uniqueQueues = new Set();
+        const standardQueues = [
+            "1.1", "1.2", "2.1", "2.2", "3.1", "3.2", 
+            "4.1", "4.2", "5.1", "5.2", "6.1", "6.2"
+        ];
+        const queueDescriptions = {
+            "1.1": "1 черга (1 підгрупа)", "1.2": "1 черга (2 підгрупа)",
+            "2.1": "2 черга (1 підгрупа)", "2.2": "2 черга (2 підгрупа)",
+            "3.1": "3 черга (1 підгрупа)", "3.2": "3 черга (2 підгрупа)",
+            "4.1": "4 черга (1 підгрупа)", "4.2": "4 черга (2 підгрупа)",
+            "5.1": "5 черга (1 підгрупа)", "5.2": "5 черга (2 підгрупа)",
+            "6.1": "6 черга (1 підгрупа)", "6.2": "6 черга (2 підгрупа)",
+        };
+        
+        rows.forEach(row => {
+            const queueId = row[COLUMN_GROUP_ID];
+            if (queueId) {
+                uniqueQueues.add(queueId);
+            }
+        });
+
+        const finalQueues = standardQueues.filter(q => uniqueQueues.has(q));
+        
+        // Заповнення select-а
+        selector.innerHTML = finalQueues.map(queueId => {
+            const description = queueDescriptions[queueId] || `${queueId} черга`;
+            return `<option value="${queueId}">${description}</option>`;
+        }).join('');
+
+        // Якщо ми очистили select, але черга не була знайдена, додамо placeholder
+        if (finalQueues.length === 0) {
+            selector.innerHTML = '<option value="0">Черг не знайдено</option>';
+        }
+    }
+
+    // === Ініціалізація ===
+
+    async function loadSheet() {
+        nextInfo.textContent = "⚙️ Завантаження даних з Google Sheets...";
+        try {
+            const res = await fetch(SHEET_URL);
+            
+            if (!res.ok) {
+                throw new Error(`Помилка HTTP: ${res.status}`);
+            }
+            
+            const text = await res.text();
+            allRows = parseGviz(text); // Викликає виправлену функцію парсингу
+            
+            if (allRows.length === 0) {
+                console.warn("Дані завантажено, але масив рядків порожній.");
+                nextInfo.textContent = "❌ Не знайдено даних. Перевірте структуру таблиці та ID.";
+                return; 
+            }
+
+        } catch (e) {
+            console.error("Помилка завантаження/парсингу таблиці:", e);
+            nextInfo.textContent = `❌ Помилка: Не вдалося завантажити дані. Перевірте ID/доступ. Деталі: ${e.message}`;
+            return; 
+        }
+        
+        // --- Етап ініціалізації після успішного завантаження ---
+        
+        updateQueueSelector(allRows); // Оновлює список доступних черг
+
+        const savedQueue = localStorage.getItem('currentQueue');
+        const availableQueues = allRows.map(r => r[COLUMN_GROUP_ID]).filter(Boolean);
+
+        if (savedQueue && availableQueues.includes(savedQueue)) {
+            currentQueue = savedQueue;
+        } else if (availableQueues.length > 0) {
+            currentQueue = availableQueues[0];
+        } else {
+            currentQueue = "1.1";
+            nextInfo.textContent = "⚠️ Дані завантажено, але вони не містять дійсних черг.";
+            queueSelect.value = currentQueue;
+            return; 
+        }
+        
+        queueSelect.value = currentQueue;
+        
+        queueShortLabel.textContent = `${currentQueue} черга`;
+        currentQueueLabel.textContent = `${currentQueue} черга`;
+        
+        nextInfo.textContent = "✅ Дані успішно завантажено. Побудова графіку...";
+        makeTimeline(currentQueue, currentDayMode);
+    }
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Завантаження теми з локального сховища
+    if (localStorage.getItem('theme') === 'dark' || 
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setDarkMode(true);
+    } else {
+        setDarkMode(false);
+    }
+
+    // Слухачі подій
+    themeToggle.addEventListener("click", toggleDarkMode);
+    
+    queueSelect.addEventListener("change", () => {
+        currentQueue = queueSelect.value;
+        localStorage.setItem('currentQueue', currentQueue);
+        queueShortLabel.textContent = `${currentQueue} черга`;
+        currentQueueLabel.textContent = `${currentQueue} черга`;
+        makeTimeline(currentQueue, currentDayMode);
+    });
+
+    document.getElementById("dayTabs").addEventListener("click", (e) => {
+        const btn = e.target.closest(".day-tab");
+        if (!btn) return;
+        document.querySelectorAll(".day-tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentDayMode = btn.dataset.day;
+        makeTimeline(currentQueue, currentDayMode);
+    });
+
+    // Старт
+    loadSheet();
+</script>
+</body>
+</html>

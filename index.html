@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -161,11 +162,26 @@
         }
 
         .brand-name {
-            font-weight: 700; font-size: 18px; letter-spacing: 0.02em;
+            font-family: 'Montserrat', sans-serif; /* Стильний шрифт */
+            font-weight: 800; /* Максимальна жирність */
+            font-size: 20px;
+            letter-spacing: -0.5px;
+            
+            /* Градієнт для тексту */
+            background: linear-gradient(120deg, var(--text-main) 40%, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--text-main);
         }
 
         .brand-sub {
-            font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px; 
+            font-weight: 700; /* Жирніший підпис */
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 0.15em; /* Широкі літери для контрасту */
+            margin-top: -2px; /* Трохи підтягуємо догори */
         }
         
         /* HERO */
@@ -200,14 +216,15 @@
         .hero-main {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 10px;
         }
 
         .hero-title {
-            font-size: 28px;
+            font-size: 22px;
             line-height: 1.2;
             font-weight: 700;
             max-width: 560px;
+            margin-bottom: 2px;
         }
 
         .hero-title span {
@@ -215,8 +232,10 @@
         }
 
         .hero-subline {
-            font-size: 14px;
+            font-size: 13px;
+            line-height: 1.4;
             color: var(--text-muted);
+            margin-bottom: 4px;
             max-width: 480px;
         }
 
@@ -241,6 +260,8 @@
             align-items: center;
             gap: 8px;
             box-shadow: 0 16px 35px rgba(37,99,235,0.35);
+            text-decoration: none; /* 👈 Додай це, щоб прибрати підкреслення */
+            justify-content: center; /* Центруємо текст */
         }
 
         .primary-btn:hover {
@@ -750,60 +771,61 @@
         }
 
         /* MOBILE */
-
+/* MOBILE */
         @media (max-width: 840px) {
-            
-            /* 💡 ВИПРАВЛЕННЯ ШАПКИ (MOBILE) */
             .top-bar {
-                align-items: flex-start;
-                flex-direction: column; /* Вертикальне розміщення: Лого зверху, керування знизу */
-                min-height: 50px; 
-                box-sizing: border-box;
+                display: flex;       /* Вмикаємо рядок */
+                align-items: center; /* Рівняємо по центру висоти */
+                gap: 8px;            /* Відступи між елементами */
+                flex-wrap: nowrap;   /* Забороняємо перенос на новий рядок */
+                min-height: 50px;
+                padding-bottom: 0;
+            }
+
+            /* Прибираємо "обгортку" кнопок, щоб вони стали в один ряд з лого */
+            .header-controls {
+                display: contents;
+            }
+
+            /* Логотип: фіксований, не стискається */
+            .brand {
+                flex-shrink: 0;
+                margin: 0;
+                max-width: 45%; /* Обмеження, щоб не займав весь екран */
             }
             
-            .header-controls {
-                width: 100%; /* Займає повну ширину, щоб елементи могли розміститися */
-                justify-content: space-between; /* Розносить чип і кнопку по краях */
-                margin-top: 10px; /* Додаємо відступ від логотипу */
-                min-height: 30px;
+            /* Відновлюємо підпис "Київщина" */
+            .brand-sub {
+                display: block;
             }
 
-            .hero-card {
-                padding: 18px 16px 16px;
-            }
-
-            .hero-title {
-                font-size: 22px;
-            }
-
-            .main-grid {
-                grid-template-columns: minmax(0,1fr);
-            }
-
-            .countdown-block {
-                padding: 8px 6px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .hero-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .primary-btn {
+            /* Чіп: ГУМОВИЙ (займає все вільне місце посередині) */
+            .region-chip {
+                flex-grow: 1;    /* Росте, займаючи пустоту */
+                flex-shrink: 1;  /* Стискається, якщо місця мало */
+                min-width: 0;    /* Магія CSS: дозволяє стискатися менше контенту */
+                
+                /* Стиль тексту */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis; /* Три крапки, якщо не влазить */
+                
+                margin: 0;
+                padding: 6px 8px;
+                font-size: 10px; /* Трохи менший шрифт */
                 justify-content: center;
-                width: 100%;
             }
 
-            .queue-select {
-                flex-direction: column;
-                align-items: stretch;
+            /* Кнопка теми: фіксована справа */
+            .theme-switch {
+                flex-shrink: 0;
+                margin: 0;
             }
 
-            select {
-                width: 100%;
-            }
+            /* Зменшені відступи для контенту */
+            .hero-card { padding: 14px 16px 18px; }
+            .hero-title { font-size: 22px; }
+            .main-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -857,10 +879,10 @@
             </p>
 
             <div class="hero-controls">
-                <button class="primary-btn" type="button">
+                <a href="https://t.me/SvitloBroBot" target="_blank" class="primary-btn">
                     <span class="icon">⚡</span>
                     Підключити сповіщення
-                </button>
+                </a>
 
                 <div class="secondary-pill">
                     Сьогодні: <strong id="currentQueueLabel">1.1 черга</strong>

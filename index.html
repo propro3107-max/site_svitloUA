@@ -563,6 +563,7 @@
             position: absolute;
             top: -4px;
             width: 2px;
+            z-index: 999;
             height: 40px;
             border-radius: var(--radius-pill);
             background: var(--danger);
@@ -1152,8 +1153,8 @@
     if (!intervals.length) {
         const seg = document.createElement("div");
         seg.className = "timeline-segment on";
-        seg.style.flexBasis = "100%";
-        seg.style.flexGrow = "1";
+        seg.style.flexBasis = "0%";
+        seg.style.flexGrow = duration;
         timelineTrack.appendChild(seg);
 
         slotsList.innerHTML = `<div style="font-size:12px;color:var(--text-muted);">На ${dayName} за графіком відключень не заплановано.</div>`;
@@ -1204,17 +1205,21 @@
             }
 
             // Відключення
-            const durationOff = to - from;
             const segOff = document.createElement("div");
             segOff.className = "timeline-segment off";
-            segOff.style.flexBasis = `${durationOff}min`;
-            segOff.style.flexGrow = String(durationOff);
-            
-            if (durationOff >= 90) { 
+
+            // не використовуємо min як одиницю ширини
+            segOff.style.flexBasis = "0";
+            segOff.style.flexGrow = durationOff;
+
+            // тут ставимо мінімальну ширину для тексту
+            segOff.style.minWidth = "35px";
+
+            // і далі текст за потреби
+            if (durationOff >= 120) {
                 segOff.textContent = `${intv.off}–${intv.on}`;
-            } else if (durationOff > 30) {
-                segOff.textContent = `${intv.off}–...`;
             }
+
             
             timelineTrack.appendChild(segOff);
 

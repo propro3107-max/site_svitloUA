@@ -2,3364 +2,1486 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Графік Світла</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <title>SvitloUA Київщина — графік відключень</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+
     <style>
         :root {
-            --bg-color: #12121a;
-            --card-bg: #1e1e2a;
-            --text-main: #ffffff;
-            --text-muted: #8e8e93;
-            --accent-green: #2ecc71;
-            --accent-red: #e74c3c;
-            --accent-gray: #3a3a45;
-            --line-color: #2c2c35;
-            --glass-bg: rgba(255,255,255,0.08);
-            --shadow-color: rgba(0,0,0,0.45);
-            --radius: 16px;
-            --text-card-detail: rgba(255, 255, 255, 0.7); /* Світлий для темної теми */
+            /* Light Theme Variables */
+            --bg-gradient: radial-gradient(circle at top left, #f8fbff 0, #edf4ff 30%, #f5f0ff 60%, #f9fafc 100%);
+            --primary: #2563eb;
+            --text-main: #0f172a;
+            --text-muted: #6b7280;
+            --surface: #ffffff;
+            --surface-soft: rgba(255,255,255,0.7);
+            --border-subtle: rgba(148,163,184,0.25);
+            --shadow-soft: 0 18px 45px rgba(15,23,42,0.10);
+            --timeline-bg: #e5e7eb;
+            --timeline-off-bg: linear-gradient(90deg, #0f172a, #111827);
+            --countdown-bg: linear-gradient(145deg, #0f172a, #020617);
+            --countdown-color: #e5e7eb;
+            
+            /* Нові змінні для статусів (Світла тема) */
+            --status-on-bg: #dcfce7;
+            --status-on-text: #15803d;
+            --status-on-border: #bbf7d0;
+            
+            --status-off-bg: #fee2e2;
+            --status-off-text: #b91c1c;
+            --status-off-border: #fecaca;
+            
+            --chart-on: #22c55e;
+            --chart-off: #ef4444;
+
+            --radius-lg: 26px;
+            --radius-pill: 999px;
         }
 
-        [data-theme="light"] {
-            --bg-color: #f2f2f7;
-            --card-bg: #ffffff;
-            --text-main: #000000;
-            --text-muted: #6e6e73;
-            --line-color: #d1d1d6;
-            --glass-bg: rgba(0,0,0,0.05);
-            --shadow-color: rgba(0,0,0,0.1);
-            --text-card-detail: #333333; /* Темний колір для деталей карток */
+        /* Dark Theme Overrides */
+        body.dark-mode {
+            --bg-gradient: linear-gradient(135deg, #090a19 0%, #151928 100%);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --surface: #1e293b;
+            --surface-soft: rgba(30,41,59,0.7);
+            --border-subtle: rgba(255,255,255,0.12);
+            --shadow-soft: 0 18px 45px rgba(0,0,0,0.40);
+            --timeline-bg: #334155;
+            
+            /* Адаптація статусів під темну тему (напівпрозорі) */
+            --status-on-bg: rgba(34,197,94,0.15);
+            --status-on-text: #4ade80;
+            --status-on-border: rgba(34,197,94,0.3);
+            
+            --status-off-bg: rgba(239,68,68,0.15);
+            --status-off-text: #f87171;
+            --status-off-border: rgba(239,68,68,0.3);
+            
+            --chart-on: #22c55e;
+            --chart-off: #ef4444;
         }
 
-        /* 1. Мітки часу (00:00, 08:00) */
-        [data-theme="light"] .t-label {
-            /* Робимо їх темно-сірими */
-            color: var(--text-muted) !important;
-        }
-
-        /* 2. Риски на таймлайні (вертикальні лінії-позначки) */
-        [data-theme="light"] .t-tick {
-            /* Робимо їх темно-сірими, щоб вони були помітні на білому */
-            background: rgba(0, 0, 0, 0.4) !important;
-        }
-
-        /* 3. Міні-таймер пігулка (щоб була помітна на білому) */
-        [data-theme="light"] .mini-timer {
-            background: rgba(0, 0, 0, 0.1); 
-            border: 1px solid rgba(0, 0, 0, 0.3);
-            color: var(--text-main); /* Чорний текст */
-        }
-
-        [data-theme="light"] .day-title {
-            /* Робимо 'ГРАФІК НА СЬОГОДНІ' чорним */
-            color: var(--text-main) !important; 
-            opacity: 1 !important; /* Повна непрозорість */
-        }
-
-        [data-theme="light"] .date-text {
-            /* Робимо 'СЕРЕДА 26.11' чорним */
-            color: var(--text-main) !important; 
-            /* Фон для пігулки вже має бути сірим/темним, що дає контраст */
-        }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            background-color: var(--bg-color);
+        /* General Styles */
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0; padding: 0;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
+            background: var(--bg-gradient);
             transition: background-color 0.3s, color 0.3s;
         }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 10px; }
-
-        /* --- HEADER --- */
-        .header {
-            width: 100%; padding: 20px 20px 10px 20px;
-            display: flex; justify-content: center; align-items: center;
-            position: sticky; top: 0; z-index: 50;
-            background: var(--bg-color); transition: background 0.3s;
+        body { min-height: 100vh; display: flex; flex-direction: column; }
+        .page {
+            max-width: 1120px; margin: 0 auto; padding: 20px 16px 32px; flex-grow: 1;
         }
 
-        .queue-select-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            font-size: 18px; font-weight: 700; color: var(--text-main);
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            padding: 8px 16px; border-radius: 20px;
-            cursor: pointer; transition: 0.2s; border: 1px solid rgba(128,128,128,0.1);
-        }
-        .queue-select-btn:active { opacity: 0.7; }
-        .arrow-icon { font-size: 12px; opacity: 0.7; transition: 0.3s; }
-        .queue-select-btn.open .arrow-icon { transform: rotate(180deg); }
-
+        /* HEADER */
         .top-bar {
-            width: 100%; display: flex; justify-content: space-between;
-            align-items: center; padding: 10px 16px 0 16px; margin-top: 4px; gap: 10px;
+            display: flex;
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap; 
         }
-        .top-bar .users {
+
+        .brand {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center; 
+            gap: 10px; 
+            flex-shrink: 0; 
+        }
+        
+        .region-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 11px;
+            border-radius: var(--radius-pill);
+            background: rgba(15,23,42,0.03);
+            border: 1px solid var(--border-subtle);
+            font-size: 11px;
             color: var(--text-muted);
-            white-space: nowrap;
+            transition: background-color 0.3s;
+            flex-shrink: 0; 
         }
-        .top-bar .updated { color: var(--text-muted); font-size: 11px; font-weight: 500; }
-        .top-bar .users #topUsers { position: relative; top: 1px; }
-
-        #app-content {
-            width: 100%;
-            max-width: 500px;
-            padding: 0 12px;
-            padding-bottom: 90px; /* щоб контент не ховався під табами */
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        
+        .dark-mode .region-chip {
+             background: rgba(255,255,255,0.05);
         }
 
-        .emergency-overlay {
-            opacity: 0;
-            visibility: hidden;
-            transition: 0.3s;
-            opacity: 1;
-            visibility: visible;
+        .region-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: var(--radius-pill);
+            background: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34,197,94,0.25);
         }
 
-        /* --- НОВА АНІМАЦІЯ БАТАРЕЙКИ (ЗБІЛЬШЕННЯ) --- */
-
-        /* Базовий стан батарейки */
-        .battery-shell {
+        .theme-switch {
+            border: none;
             cursor: pointer;
-            /* Робимо перехід плавним і приємним */
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
-            z-index: 10; /* Базовий рівень */
-        }
-
-        /* Стан, коли батарейка збільшена */
-        .battery-shell.battery-enlarged {
-            /* Збільшуємо на 15% */
-            transform: scale(1.15);
-            /* Додаємо тінь, щоб вона ніби "піднялася" над екраном */
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4) !important;
-            /* Піднімаємо вище всіх інших елементів */
-            z-index: 100;
-        }
-
-        .battery-tap-anim {
-            animation: batteryTap 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .emergency-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.65);
-            backdrop-filter: blur(4px);
-            display: flex;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
-            opacity: 0; visibility: hidden;
-            transition: 0.3s;
+            font-size: 18px;
+            line-height: 1;
+            transition: background-color 0.3s, color 0.3s;
+            flex-shrink: 0;
+        }
+        
+        .brand-logo {
+            width: 40px; height: 40px; border-radius: 14px;
+            background: radial-gradient(circle at 20% 0, #4ade80, #22c55e 35%, #15803d 100%);
+            display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 0 2px rgba(34,197,94,0.2), 0 16px 35px rgba(22,163,74,0.7);
         }
 
-        .emergency-overlay.show {
-            opacity: 1;
-            visibility: visible;
+        .brand-logo svg {
+            width: 26px; height: 26px;
         }
 
-        .emergency-box {
-            background: var(--card-bg);
-            border-radius: 20px;
-            width: 88%;
-            max-width: 360px;
-            padding: 26px 22px 22px;
-            text-align: center;
-            border: 1px solid rgba(255,0,0,0.25);
-            box-shadow: 0 10px 28px rgba(255,0,0,0.25);
+        .brand-text {
+            display: flex; flex-direction: column; gap: 2px;
         }
 
-        .emergency-title {
+        .brand-name {
+            font-family: 'Montserrat', sans-serif; /* Стильний шрифт */
+            font-weight: 800; /* Максимальна жирність */
             font-size: 20px;
-            font-weight: 800;
-            color: #ff4d4d;
+            letter-spacing: -0.5px;
+            
+            /* Градієнт для тексту */
+            background: linear-gradient(120deg, var(--text-main) 40%, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: var(--text-main);
+        }
+
+        .brand-sub {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px; 
+            font-weight: 700; /* Жирніший підпис */
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 0.15em; /* Широкі літери для контрасту */
+            margin-top: -2px; /* Трохи підтягуємо догори */
+        }
+        
+        /* HERO */
+
+        .hero-card {
+            background: linear-gradient(135deg, var(--surface-soft), var(--surface-soft));
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-lg);
+            padding: 22px 20px 20px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-subtle);
+            position: relative;
+            overflow: hidden;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .dark-mode .hero-card {
+            background: linear-gradient(135deg, rgba(30,41,59,0.92), rgba(30,41,59,0.9));
+        }
+
+        .hero-card::before {
+            content: "";
+            position: absolute;
+            right: -40px;
+            top: -60px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(59,130,246,0.14), transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-main {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .hero-title {
+            font-size: 22px;
+            line-height: 1.2;
+            font-weight: 700;
+            max-width: 560px;
+            margin-bottom: 2px;
+        }
+
+        .hero-title span {
+            color: var(--primary);
+        }
+
+        .hero-subline {
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            max-width: 480px;
+        }
+
+        .hero-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .primary-btn {
+            border: none;
+            outline: none;
+            cursor: pointer;
+            border-radius: var(--radius-pill);
+            padding: 11px 18px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 16px 35px rgba(37,99,235,0.35);
+            text-decoration: none; /* 👈 Додай це, щоб прибрати підкреслення */
+            justify-content: center; /* Центруємо текст */
+        }
+
+        .primary-btn:hover {
+             opacity: 0.9;
+        }
+
+        .primary-btn span.icon {
+            display: inline-flex;
+            width: 20px;
+            height: 20px;
+            border-radius: var(--radius-pill);
+            background: rgba(255,255,255,0.18);
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .secondary-pill {
+            font-size: 12px;
+            padding: 7px 11px;
+            border-radius: var(--radius-pill);
+            border: 1px dashed var(--text-muted);
+            background: var(--surface-soft);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        
+        .dark-mode .secondary-pill {
+             border-color: rgba(255,255,255,0.3);
+        }
+
+        .secondary-pill strong {
+            font-weight: 600;
+            color: var(--text-main);
+            transition: color 0.3s;
+        }
+
+        .hero-footer {
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .hero-footer span.badge {
+            padding: 5px 9px;
+            border-radius: var(--radius-pill);
+            background: rgba(22,163,74,0.08);
+            border: 1px solid rgba(22,163,74,0.16);
+            color: #15803d;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .dark-mode .hero-footer span.badge {
+             background: rgba(22,163,74,0.25);
+             border-color: rgba(22,163,74,0.5);
+             color: #dcfce7;
+        }
+
+        .hero-footer span.badge svg {
+            width: 13px;
+            height: 13px;
+        }
+        
+        .dark-mode .hero-footer span.badge svg path {
+             fill: #dcfce7 !important;
+        }
+        
+        .dark-mode .hero-footer span.badge svg path:nth-child(2) {
+             fill: #22c55e !important;
+        }
+
+
+        /* GRID MAIN */
+
+        .main-grid {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.2fr);
+            gap: 18px;
+            align-items: flex-start;
+        }
+
+        /* CARD (NEXT OUTAGE / LEGEND / TIMELINE) */
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 16px 16px 14px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-soft);
+            transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 12px;
         }
 
-        .emergency-text {
-            color: var(--text-main);
-            opacity: 0.9;
-            font-size: 15px;
-            margin-bottom: 22px;
-            line-height: 1.45;
-        }
-
-        .emergency-btn {
-            width: 100%;
-            padding: 12px;
-            background: #ff4d4d;
-            border: none;
-            border-radius: 12px;
-            color: white;
+        .card-title {
             font-size: 16px;
-            font-weight: 700;
+            font-weight: 600;
         }
 
+        .chip {
+            padding: 4px 8px;
+            border-radius: var(--radius-pill);
+            font-size: 11px;
+            background: rgba(37,99,235,0.08);
+            color: #1d4ed8;
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-        /* --- БАТАРЕЙКА --- */
-        .battery-container {
+        .dark-mode .chip {
+            background: rgba(59,130,246,0.3);
+            color: #bfdbfe;
+        }
+
+        .countdown {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 10px;
-
-            /* Відступ знизу, щоб таймлайн не прилипав */
-            margin-bottom: 10px;
-
-            position: relative;
-
-            /* 🔥 ГОЛОВНЕ ВИПРАВЛЕННЯ НАЛІЗАННЯ: */
-            z-index: 10; /* Було 10. Ставимо 30, щоб було вище за таймлайн (у якого 20) */
-        }
-        /* --- ОНОВЛЕНІ СТИЛІ ДЛЯ БАТАРЕЙКИ --- */
-
-        .battery-wrapper {
-            display: flex;
-            align-items: center;
-            position: relative;
-
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease;
-            cursor: pointer;
-            z-index: 10;
-
-            /* 🔥 ДОДАЄМО ЦЕЙ РЯДОК: */
-            /* Компенсуємо піптик (6px) + його відступ (4px) = 10px */
-            /* Тепер корпус буде ідеально по центру */
-            margin-left: 10px;
-        }
-
-        /* Коли збільшена - збільшуємо всю обгортку */
-        .battery-wrapper.battery-enlarged {
-            transform: scale(1.15);
-            /* drop-shadow краще, бо робить тінь і для піптика теж */
-            filter: drop-shadow(0 15px 35px rgba(0,0,0,0.4));
-            z-index: 100;
-        }
-
-        .battery-shell {
-            width: 160px; height: 48px;
-            border: 3px solid rgba(128,128,128,0.3); border-radius: 14px;
-            padding: 4px; position: relative;
-            /* Звідси ми прибрали transform і transition */
-        }
-        .battery-tip { width: 6px; height: 18px; background: rgba(128,128,128,0.3); border-radius: 0 4px 4px 0; margin-left: 4px; }
-
-        .battery-fill {
-            height: 100%; width: 100%; border-radius: 9px;
-            position: relative; overflow: hidden;
-            /* Плавна зміна кольору та ширини */
-            transition: width 0.5s linear, background 0.5s linear, box-shadow 0.5s linear;
-        }
-
-/* --- ПРОГРЕС-БАР (PREMIUM) --- */
-        .card-progress-track {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 4px; 
-            background: rgba(255, 255, 255, 0.1); /* Трішки світліший фон треку */
-            display: none;
-            z-index: 5;
-        }
-
-        .card-progress-fill {
-            height: 100%;
-            width: 0%;
-            transition: width 1s linear;
-            border-radius: 0 2px 2px 0;
-            position: relative; /* Щоб позиціонувати "іскру" */
-        }
-
-        /* Іскра на кінці (білий блік) */
-        .card-progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 6px; /* Ширина бліка */
-            background: #ffffff;
-            border-radius: 4px;
-            opacity: 0.8;
-            box-shadow: 0 0 10px 2px rgba(255,255,255, 0.8); /* Світіння бліка */
-        }
-
-        .card.active-now .card-progress-track {
-            display: block;
-        }
-
-        /* 🟢 ЗЕЛЕНИЙ (Світло є) */
-        .card.c-on .card-progress-fill {
-            /* Градієнт: від темного до яскравого */
-            background: linear-gradient(90deg, rgba(46, 204, 113, 0.4) 0%, rgba(46, 204, 113, 1) 100%);
-            box-shadow: 0 -2px 10px rgba(46, 204, 113, 0.5); /* Світіння вгору */
-        }
-
-        /* 🔴 ЧЕРВОНИЙ (Світла нема) */
-        .card.c-off .card-progress-fill {
-            /* Градієнт: від темного до яскравого */
-            background: linear-gradient(90deg, rgba(231, 76, 60, 0.4) 0%, rgba(231, 76, 60, 1) 100%);
-            box-shadow: 0 -2px 10px rgba(231, 76, 60, 0.5); /* Світіння вгору */
-        }
-
-        /* --- СТИЛЬНА ПІГУЛКА ТАЙМЕРА --- */
-        .time-left-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
-            
-            padding: 2px 6px 3px 6px; /* Трохи компактніше */
-            
-            /* 🔥 БУЛО margin-right: 10px; СТАЛО 0 (бо gap у батька вирішує) */
-            margin-right: 0 !important; 
-            
-            font-size: 12px; /* Трохи менший шрифт, щоб влізло */
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: 0.3px;
-            
-            border-right: none !important; 
-            
-            /* Щоб бейдж не сплющувався, якщо місця мало */
-            flex-shrink: 0; 
-
-            animation: pulseBadge 2s infinite ease-in-out;
-        }
-
-        /* Анімація дихання */
-        @keyframes pulseBadge {
-            0% { background: rgba(255, 255, 255, 0.15); }
-            50% { background: rgba(255, 255, 255, 0.25); }
-            100% { background: rgba(255, 255, 255, 0.15); }
-        }
-        
-        /* Прибираємо риску для світлої теми, робимо просто відступ */
-        [data-theme="light"] .time-left-badge {
-            border-right: 1px solid rgba(0,0,0,0.1);
-            color: #000;
-        }
-        
-        /* Базовий вигляд (завжди темний) */
-        .card, .detail-card {
-            background: var(--card-bg) !important; /* 🔥 ПРИМУСОВО ТЕМНИЙ ФОН */
-            border: 2px solid transparent;         /* Місце під рамку */
-            color: var(--text-main);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        /* 🟢 АКТИВНА ЗЕЛЕНА КАРТКА (Рамка + Світіння) */
-        .card.active-now.c-on, 
-        .detail-card.on {
-            background: var(--card-bg) !important; /* Фон залишається темним! */
-            border-color: #30d158;                 /* Зелена рамка */
-            box-shadow: 0 0 20px rgba(48, 209, 88, 0.25); /* Зелене світіння навколо */
-        }
-
-        /* 🔴 АКТИВНА ЧЕРВОНА КАРТКА (Рамка + Світіння) */
-        .card.active-now.c-off, 
-        .detail-card.off {
-            background: var(--card-bg) !important; /* Фон залишається темним! */
-            border-color: #ff453a;                 /* Червона рамка */
-            box-shadow: 0 0 20px rgba(255, 69, 58, 0.25); /* Червоне світіння навколо */
-        }
-
-        /* Прибираємо стару смужку збоку для активних карток, бо тепер у нас є рамка */
-        .card.active-now::before { display: none; }
-        
-        
-
-/* --- СТИЛІ ДЛЯ DONATE POPUP --- */
-        .donate-hero {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .donate-emoji-big {
-            font-size: 48px;
-            display: block;
-            margin-bottom: 10px;
-            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
-            animation: heartBeat 1.5s infinite ease-in-out;
-        }
-        @keyframes heartBeat {
-            0% { transform: scale(1); }
-            15% { transform: scale(1.15); }
-            30% { transform: scale(1); }
-            45% { transform: scale(1.15); }
-            60% { transform: scale(1); }
-        }
-
-        /* Кнопка Монобанки */
-        .btn-mono {
-            display: flex;
-            align-items: center;
-            justify-content: center;
             gap: 10px;
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #000000, #333333);
-            border: 1px solid rgba(255,255,255,0.1);
+            margin-top: 6px;
+        }
+
+        .countdown-block {
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 10px 8px;
             border-radius: 16px;
-            color: white;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 16px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-mono::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            transform: translateX(-100%);
-            transition: 0.5s;
-        }
-        .btn-mono:active { transform: scale(0.96); }
-
-        /* Поле картки */
-        .card-copy-box {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px dashed rgba(255, 255, 255, 0.2);
-            padding: 14px;
-            border-radius: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .card-copy-box:active { background: rgba(255, 255, 255, 0.15); }
-
-        .cc-num {
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: var(--text-main);
-        }
-        .cc-icon { font-size: 18px; opacity: 0.7; }
-
-        .donate-divider {
-            display: flex; align-items: center; gap: 10px;
-            margin: 15px 0; color: var(--text-muted); font-size: 12px; text-transform: uppercase;
-        }
-        .donate-divider::before, .donate-divider::after {
-            content: ''; flex: 1; height: 1px; background: rgba(128,128,128,0.2);
-        }
-
-        /* сіра батарейка коли графік невідомий */
-        .battery-fill.fill-gray {
-            background: #555;
-            box-shadow: none;
-        }
-
-        .share-wrapper {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-        }
-        .share-wrapper {
-            margin-top: 6px !important;
-            margin-bottom: -4px !important;
-        }
-
-        .share-btn {
-            background: none;               /* мінімалізм */
-            color: #46c97f;                 /* акуратний зелений */
-            font-size: 15px;
-            font-weight: 600;
-            padding: 10px 4px;
-            cursor: pointer;
-            border: none;
-            border-radius: 12px;
-            transition: 0.25s ease;
-        }
-
-        .share-btn:active {
-            opacity: 0.6;
-            transform: scale(0.97);
-        }
-
-        /* --- Додай це в кінці блоку CSS --- */
-
-        /* Клас для "піднятого" курсора */
-        .cursor-line.cursor-elevated {
-            /* Зберігаємо центрування (-50%) і піднімаємо на 3px вгору (calc), + трохи збільшуємо */
-            transform: translate(-50%, calc(-50% - 3px)) scale(1.1);
-            /* Робимо його ще яскравішим */
-            box-shadow: 0 0 12px rgba(255, 255, 255, 1);
-            /* Трохи вищим, щоб він "обіймав" збільшену картку */
-            height: 36px; 
-            transition: transform 0.3s ease, height 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        /* плавна поява */
-        .share-wrapper.fade-in {
-            animation: fadeInShare 0.4s ease forwards;
-        }
-
-        @keyframes fadeInShare {
-            from { opacity: 0; transform: translateY(6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-
-        .emergency-banner {
+            background: var(--countdown-bg);
+            color: var(--countdown-color);
             text-align: center;
-            color: #ff4d4d;
-            font-size: 14px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .countdown-value {
+            font-size: 22px;
             font-weight: 700;
-            margin-top: -4px;
-            margin-bottom: 8px;
-            animation: pulseEmergency 1.2s infinite ease-in-out;
+            letter-spacing: 0.06em;
         }
 
-        @keyframes pulseEmergency {
-            0%   { opacity: 0.7; }
-            50%  { opacity: 1;   }
-            100% { opacity: 0.7; }
-        }
-
-         .share-native-btn {
-            display: block;
-            text-align: center;
-            background: #2b8eff;
-            color: #fff;
-            padding: 14px;
-            border-radius: 14px;
-            margin: 12px 20px 0 20px;
-            font-weight: 600;
-            font-size: 15px;
-            text-decoration: none;
-            transition: 0.2s;
-        }
-
-        .share-native-btn:active {
-            transform: scale(0.96);
-            opacity: 0.85;
-        }
-
-/* --- АНІМАЦІЇ ЗАРЯДКИ/РОЗРЯДКИ --- */
-
-/* 1. Смужки (текстура) - Зменшена Інтенсивність */
-        .battery-fill::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            /* 🔥 Зменшили прозорість з 0.4 до 0.25 */
-            background-image: linear-gradient(45deg, 
-                rgba(0,0,0,0.25) 25%, 
-                transparent 25%, 
-                transparent 50%, 
-                rgba(0,0,0,0.25) 50%, 
-                rgba(0,0,0,0.25) 75%, 
-                transparent 75%, 
-                transparent);
-            background-size: 20px 20px;
-            z-index: 2; /* Над фоном */
-        }
-
-        /* Це біла напівпрозора смуга, що біжить поверху */
-        /* Ефект скляної трубки зверху */
-        .battery-fill::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50%; /* Верхня половина */
-            background: linear-gradient(to bottom, 
-                rgba(255,255,255,0.15) 0%, 
-                rgba(255,255,255,0) 100%);
-            border-radius: 8px 8px 0 0;
-            pointer-events: none;
-            z-index: 3;
-        }
-
-        /* --- АНІМАЦІЯ ХВИЛІ (Зліва направо) --- */
-        @keyframes shineMove {
-            0% { left: -100%; }
-            100% { left: 200%; } /* Пробігає до кінця вправо */
-        }
-
-        .battery-fill:not(.discharging)::before {
-            animation: shineMove 3s infinite ease-in-out; /* Хвиля біжить кожні 2 сек */
-        }
-
-        /* Смужки теж рухаються вправо (наповнення) */
-        @keyframes moveStripesRight { 0% { background-position: 0 0; } 100% { background-position: 40px 0; } }
-        .battery-fill:not(.discharging)::after {
-            animation: moveStripesRight 3s linear infinite;
-        }
-
-
-        /* 2. КОЛИ РОЗРЯДЖАЄТЬСЯ (Світло є) */
-        /* Хвилі немає (або вона дуже повільна), смужки повзуть вліво */
-
-        /* Прибираємо хвилю, щоб не миготіло, коли світло є (спокійний стан) */
-        .battery-fill.discharging::before {
-            display: none;
-            /* Або якщо хочеш ледь помітну: animation: shineMove 5s infinite; opacity: 0.2; */
-        }
-
-        /* Смужки повільно пливуть вліво (витікання) */
-        @keyframes moveStripesLeft { 0% { background-position: 0 0; } 100% { background-position: -40px 0; } }
-        .battery-fill.discharging::after {
-            animation: moveStripesLeft 4s linear infinite;
-        }
-
-        /* 2. Анімація для стану "ЗАРЯДКА" (Світла нема) */
-        /* Смужки рухаються вправо (наповнення) + пульсація світіння */
-        @keyframes chargeFlow {
-            0% { background-position: 0 0; }
-            100% { background-position: 40px 0; }
-        }
-        @keyframes chargeGlow {
-            0% { box-shadow: 0 0 10px inherit; filter: brightness(1); }
-            50% { box-shadow: 0 0 20px inherit; filter: brightness(1.2); }
-            100% { box-shadow: 0 0 10px inherit; filter: brightness(1); }
-        }
-
-        /* Застосовуємо до батарейки, яка НЕ має класу discharging (тобто заряджається) */
-        .battery-fill:not(.discharging)::after {
-            animation: chargeFlow 1.5s linear infinite;
-        }
-        .battery-fill:not(.discharging) {
-            /* М'яка пульсація світла */
-            animation: chargeGlow 2s ease-in-out infinite;
-        }
-
-
-        /* 3. Анімація для стану "РОЗРЯДКА" (Світло є) */
-        /* Смужки рухаються вліво (витікання) повільно + спокійне дихання */
-        @keyframes dischargeFlow {
-            0% { background-position: 0 0; }
-            100% { background-position: -40px 0; }
-        }
-        @keyframes dischargeBreath {
-            0% { opacity: 1; }
-            50% { opacity: 0.85; } /* Ледь помітне потускніння */
-            100% { opacity: 1; }
-        }
-
-        /* Застосовуємо, коли є клас discharging */
-        .battery-fill.discharging::after {
-            /* Дуже повільний рух (4s), щоб не миготіло */
-            animation: dischargeFlow 4s linear infinite;
-        }
-        .battery-fill.discharging {
-            /* Спокійний ефект "дихання" */
-            animation: dischargeBreath 5s ease-in-out infinite;
-        }
-
-        .battery-text {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 22px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            font-variant-numeric: tabular-nums; width: 100%; text-align: center; z-index: 5; color: white;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.4); /* Легка тінь для читабельності */
-        }
-        .battery-status {
-            /* Відступи і центрування */
-            margin-top: 8px;
-            margin-left: 0;
-            
-            /* Шрифт (технічний) */
-            font-family: "Menlo", "Consolas", "Roboto Mono", monospace;
+        .countdown-label {
             font-size: 10px;
-            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            
-            /* Базовий колір (якщо JS не спрацює) */
-            color: var(--text-muted);
-            
-            /* Плавність зміни кольору */
-            transition: color 0.4s ease, text-shadow 0.4s ease;
+            letter-spacing: 0.16em;
+            opacity: .7;
         }
 
-        /* 🟢 Коли світло Є: Неоновий зелений */
-        .battery-status.status-on {
-            color: #4cd964; 
-            text-shadow: 0 0 12px rgba(76, 217, 100, 0.6);
-        }
-
-        /* 🔴 Коли світла НЕМАЄ: Неоновий червоний */
-        .battery-status.status-off {
-            color: #ff3b30;
-            text-shadow: 0 0 12px rgba(255, 59, 48, 0.6);
-        }
-
-        /* --- ДАТА (ВИПРАВЛЕНО: РІВНОМІРНІ ВІДСТУПИ) --- */
-        .date-box {
-            display: flex !important;
-            align-items: center;
-            justify-content: space-between;
-            
-            width: 100%;
-            /* 🔥 БУЛО 50px -> СТАЛО 42px (звузили) */
-            height: 42px;               
-            
-            /* Трохи зменшив відступ знизу (було 12px -> стало 8px) */
-            margin: 4px 0 8px 0 !important; 
-            padding: 0 6px 0 16px;      
-
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;        /* Трохи менший радіус */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .date-line { display: none !important; }
-
-        /* 2. Лівий напис "ГРАФІК..." */
-        .day-title {
+        .next-info {
+            margin-top: 8px;
             font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            
-            /* 🔥 !important змусить його стати білим */
-            color: rgba(255, 255, 255, 0.9) !important; 
-            
-            margin: 0;
-            line-height: 1;
-            opacity: 1 !important; /* Прибираємо будь-яку прозорість */
-        }
-
-        /* 3. Права плашка "ВІВТОРОК..." */
-        /* 3. Права плашка "ВІВТОРОК..." - МАКСИМАЛЬНО ЖИРНА */
-        .date-text {
-            display: flex !important;
-            align-items: center;
-            justify-content: center;
-
-            height: 30px;                 
-            padding: 0 12px;
-            
-            background: rgba(255, 255, 255, 0.12);
-            border-radius: 8px;
-            
-            font-size: 13px;
-            
-            /* 🔥 БУЛО 800 -> СТАЛО 900 (Black) */
-            font-weight: 700 !important; 
-            
-            color: #ffffff !important;   
-            
-            /* 🔥 ХАК: додаємо мікро-тінь того ж кольору, 
-            це робить літери візуально ще товстішими і чіткішими */
-            text-shadow: 0 0 1px rgba(255,255,255,0.5) !important;
-            
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            
-            margin: 0;
-            padding-bottom: 1px;
-        }
-
-        /* Світла тема */
-        [data-theme="light"] .date-box { background: #ffffff; border-color: rgba(0,0,0,0.05); }
-        [data-theme="light"] .date-text { background: rgba(0,0,0,0.08); color: #000; }
-
-        /* --- ГОЛОВНИЙ БЛОК ДНЯ (слайдиться) --- */
-        .day-body {
-            position: relative;
-            transition: transform .25s ease, opacity .25s ease;
-            will-change: transform, opacity;
-        }
-
-        /* --- НОВИЙ MODERN TIMELINE --- */
-        .timeline-box {
-            position: relative;
-            padding: 0 10px; 
-        }
-
-        .timeline-track {
-            position: relative;
-            width: 100%;
-            height: 19px; 
-            display: flex;
-            align-items: center;
-            
-            /* 🔥 КРИТИЧНО: Прибираємо gap, щоб математика курсора збігалася з графіком */
-            gap: 0 !important; 
-            
-            background: rgba(255, 255, 255, 0.05); /* Легкий фон треку, як на скріні */
-            border-radius: 6px; /* Закруглення самого треку */
-            overflow: hidden; /* Щоб сегменти не вилазили за радіус */
-        }
-
-        .share-minimal-btn {
-            background: none;
-            border: none;
-            color: #48ff91;
-            font-size: 16px;
-            padding: 10px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-        }
-
-        .share-minimal-btn:hover {
-            opacity: 0.8;
-        }
-
-        .time-pointer {
-            position: absolute;
-            width: 4px;
-            background: #ffffff;
-            border-radius: 2px;
-            z-index: 50; /* ВИЩЕ ніж сегмент (20–30), але нижче ніж модалки */
-        }
-
-        .segment {
-            position: relative;
-            height: 100%; /* На всю висоту треку */
-            
-            /* flex-grow вже задається через JS, тут база */
-            flex-grow: 1;
-            flex-basis: 0;
-            
-            opacity: 0.8; /* Трохи яскравіше */
-            transition: all 0.3s ease;
-            cursor: pointer;
-
-            /* 🔥 ЗАМІСТЬ GAP: Використовуємо прозору рамку справа для відступу */
-            border-right: 2px solid var(--bg-color); 
-            box-sizing: border-box; 
-        }
-
-
-
-        .segment:first-child { border-left: none; }
-        .segment:last-child {
-            border-right: none;
-        }
-
-        /* 🔥 Красива обводка + світіння без кривої лінії */
-        .segment-selected {
-            transform: translateY(-3px);
-            z-index: 60;
-        }
-
-        .segment-selected::after {
-            content: "";
-            position: absolute;
-            inset: -2px;
-            border-radius: 16px; /* те саме, ідеально підібрано */
-            border: 2px solid white; /* стало тонше */
-            box-shadow: 0 0 12px rgba(255,255,255,0.4); /* менш агресивне світіння */
-            pointer-events: none;
-            z-index: 61;
-        }
-
-
-        .on { background-color: #30d158; opacity: 1; }
-        .off { background-color: #ff453a; opacity: 1; }
-        .segment-icon { font-size: 18px; color: white; z-index: 2; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25)); opacity: 0.95; }
-
-        /* --- СУЧАСНИЙ КУРСОР (LIGHT BEAM) --- */
-        .cursor-line {
-            position: absolute;
-            top: 0;
-            bottom: 0; /* Розтягуємо на всю висоту батька (.timeline-track) */
-            width: 2px;   
-            background: #ffffff; /* Просто біла лінія */
-            box-shadow: 0 0 4px rgba(255,0,0,0.8); /* Червоне або біле світіння */
-            z-index: 50; 
-            pointer-events: none;
-            transform: none; /* Прибираємо центрування по Y, бо ми розтягнули top/bottom */
-            height: auto; /* Скидаємо фіксовану висоту */
-            margin-top: 0;
-        }
-
-        /* Яскрава точка на таймлайні */
-        .cursor-line::before,
-        .cursor-line::after {
-            display: none;
-        }
-
-        .time-labels { position: relative; width: 100%; height: 24px; margin-top: 8px; padding: 0; left: -1px; }
-        .t-label {
-            position: absolute; top: 0; font-size: 11px; font-weight: 600; color: var(--text-muted);
-            transform: translateX(-50%); white-space: nowrap; letter-spacing: 0.3px;
-        }
-        .t-tick {
-            display: block;
-            position: absolute;
-            
-            /* 🔥 Піднімаємо вгору (мінусовий відступ), 
-               щоб риска починалася прямо від кольорової смужки */
-            top: -6px; 
-            
-            width: 1px;   /* Тонка лінія */
-            height: 7px;  /* Довжина рисочки */
-            
-            /* Робимо трохи яскравішим, щоб було видно */
-            background: rgba(255, 255, 255, 0.35); 
-            
-            transform: translateX(-50%);
-            z-index: 1;
-        }
-
-        @keyframes pulseActive {
-            0% { transform: scale(1); }
-            40% { transform: scale(1.06); }
-            100% { transform: scale(1); }
-        }
-
-        .q-item.pulse {
-            animation: pulseActive 1.2s ease;
-        }
-
-
-        /* --- CARD LIST --- */
-        .card-list { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
-        .card {
-            background: var(--card-bg); border-radius: var(--radius); padding: 16px;
-            display: flex; flex-direction: column; position: relative; overflow: hidden;
-            border: 2px solid transparent; transition: all 0.3s ease;
-            box-shadow: 0 4px 12px var(--shadow-color);
-            transform: translateZ(0); 
-            will-change: transform, box-shadow;
-        }
-        .card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
-        .card.c-on::before  { background: var(--accent-green); }
-        .card.c-off::before { background: var(--accent-red); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-
-        @keyframes pulseGreen { 0% { box-shadow: 0 0 15px rgba(46, 204, 113, 0.3); transform: scale(1); } 50% { box-shadow: 0 0 30px rgba(46, 204, 113, 0.6); transform: scale(1.02); } 100% { box-shadow: 0 0 15px rgba(46, 204, 113, 0.3); transform: scale(1); } }
-        @keyframes pulseRed   { 0% { box-shadow: 0 0 15px rgba(231, 76, 60, 0.3); transform: scale(1); } 50% { box-shadow: 0 0 30px rgba(231, 76, 60, 0.6); transform: scale(1.02); } 100% { box-shadow: 0 0 15px rgba(231, 76, 60, 0.3); transform: scale(1); } }
-
-        .card.active-now { z-index: 10; border-width: 2px; }
-        .card.active-now.c-on  { border-color: var(--accent-green); animation: pulseGreen 2s infinite ease-in-out; }
-        .card.active-now.c-off { border-color: var(--accent-red);  animation: pulseRed  2s infinite ease-in-out; }
-        .card.active-now::before { display: none; }
-
-        .card-info { display: flex; align-items: center; gap: 14px; }
-        .c-icon { font-size: 20px; width: 24px; text-align: center; }
-        .c-times { display: flex; flex-direction: column; gap: 2px; }
-        .status-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-        .c-on  .status-label { color: var(--accent-green); }
-        .c-off .status-label { color: var(--accent-red); }
-        .c-time { font-size: 16px; font-weight: 700; color: var(--text-main); }
-        .c-dur {
-            display: flex !important;       /* Вмикаємо Flexbox */
-            align-items: center;            /* Рівняємо по вертикалі */
-            justify-content: flex-end;      /* Притискаємо до правого краю */
-            gap: 8px;                       /* Відступ між бейджем і часом */
-            
-            font-size: 14px;
-            font-weight: 500;
             color: var(--text-muted);
-            white-space: nowrap;            /* Забороняємо перенос тексту */
         }
 
-
-        /* --- МІНІ-ТАЙМЕР (ЗМЕНШЕНИЙ) --- */
-/* --- МІНІ-ТАЙМЕР (ФІНАЛЬНА КОМПАКТНІСТЬ) --- */
-        .mini-timer {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-            
-            margin-left: 6px;
-            
-            /* 🔥 Фіксована висота та мінімальний padding для компактності */
-            height: 18px; /* Замість padding, що плаває */
-            padding: 0 5px; /* Лише бокові відступи */
-
-            background: rgba(255, 255, 255, 0.2); 
-            border-radius: 4px;
-            
-            /* Розмір тексту і вирівнювання */
-            font-size: 10px; 
-            line-height: 1;
-            font-weight: 700;
-            color: #fff;
-            
-            /* 💥 ОПТИЧНА КОРЕКЦІЯ: Зміщуємо весь вміст на 0.5px вниз, щоб компенсувати емодзі */
-            transform: translateY(0.5px); 
-            
-            animation: pulseBadge 2s infinite ease-in-out;
-        }
-
-        /* 🟢 АКТИВНИЙ ТАЙМЕР (СВІТЛО Є) */
-        .card.c-on .mini-timer {
-            background: rgba(48, 209, 88, 0.2);       /* Прозорий зелений фон */
-            color: #30d158;                          /* Зелений текст */
-            border: 1px solid rgba(48, 209, 88, 0.5); /* Зелена рамка */
-        }
-
-        /* 🔴 АКТИВНИЙ ТАЙМЕР (ВІДКЛЮЧЕННЯ) */
-        .card.c-off .mini-timer {
-            background: rgba(255, 69, 58, 0.2);       /* Прозорий червоний фон */
-            color: #ff453a;                           /* Червоний текст */
-            border: 1px solid rgba(255, 69, 58, 0.5); /* Червона рамка */
-        }
-
-        /* 2. Фікс вирівнювання статусу */
-        .status-label {
-            /* Робимо весь рядок гнучким, щоб він сам вирівнював свій вміст (текст + пігулку) */
-            display: inline-flex;
-            align-items: center;
-            
-            /* Зберігаємо оригінальні стилі */
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .card-details {
-            padding: 0 2px;
-            font-size: 13px;
-            line-height: 1.5;
-            color: rgba(255, 255, 255, 0.7);
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-            transition: all 0.25s ease;
-            will-change: max-height, opacity; 
-            transform: translateZ(0);
-        }
-
-        /* 🔥 ГОЛОВНЕ: Робимо важливий текст (час) ЯСКРАВО БІЛИМ */
-        .card-details b {
-            color: var(--text-main) !important;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-        }
-
-        /* Примітка знизу (курсив) - робимо тьмянішою */
-        .card-details i {
-            color: rgba(255, 255, 255, 0.4);
-            display: block;
-            margin-top: 8px;
-        }
-
-        .card.expanded .card-details {
-            max-height: 300px;
-            opacity: 1;
-        }
-
-        html[data-theme="light"] .card-details {
-            color: #1a1a1a !important;
-            background: transparent !important;
-            border-top: none !important;
-        }
-
-        /* Додатково для жирного тексту всередині */
-        html[data-theme="light"] .card-details b {
-            color: #000000 !important;
-        }
-
-        /* Додатково для курсиву */
-        html[data-theme="light"] .card-details i {
-            color: #555555 !important;
-        }
-
-        html[data-theme="light"] .c-item,
-        html[data-theme="light"] .status-label,
-        html[data-theme="light"] .card-info,
-        html[data-theme="light"] .c-dur {
-            color: #1a1a1a !important;
-            transform: translateZ(0);
-        }
-
-        /* --- DETAIL CARD --- */
-        @keyframes popInSpring  { 0% { opacity: 0; transform: translateY(-20px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-        @keyframes popOutSpring { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-20px) scale(0.95); } }
-        .detail-card-container { margin-top: 12px; }
-        .detail-card {
-            background: var(--card-bg); border-radius: var(--radius);
-            padding: 16px 18px 14px; border: 2px solid transparent;
-            box-shadow: 0 10px 25px var(--shadow-color); position: relative; overflow: hidden;
-            animation: popInSpring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .detail-card.closing {
-            animation: popOutSpring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-
-        @keyframes popOutSpring {
-            0% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-20px) scale(0.95);
-            }
-        }
-        .detail-card.on  { border-color: var(--accent-green); box-shadow: 0 0 18px rgba(46, 204, 113, 0.35); }
-        .detail-card.off { border-color: var(--accent-red);  box-shadow: 0 0 18px rgba(231, 76, 60, 0.35); }
-        .detail-header, .detail-left { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
-        .detail-main { display: flex; flex-direction: column; gap: 3px; }
-        .detail-status { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-        .detail-status-on  { color: var(--accent-green); }
-        .detail-status-off { color: var(--accent-red); }
-        .detail-time { font-size: 16px; font-weight: 700; color: var(--text-main); }
-        .detail-duration { font-size: 14px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
-        .detail-divider { margin: 10px 0 8px 0; height: 1px; background: rgba(128,128,128,0.1); }
-        .detail-body { font-size: 14px; line-height: 1.45; color: var(--text-main); opacity: 0.8; }
-        .detail-body p { margin: 0 0 4px 0; }
-        .detail-note { margin-top: 6px; font-size: 12px; font-style: italic; color: var(--text-muted); }
-
-        /* --- FOOTER (підсумок + донат) --- */
-        .total-block {
-            display: inline-block;
-            background: var(--glass-bg);
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid rgba(128,128,128,0.1);
-
-            /* 🔥 виправлені відступи */
-            margin-top: 8px !important;    /* було 20px — зменшив */
-            margin-bottom: 6px;              /* було 15px — зменшив */
-            margin-left: auto;
-            margin-right: auto;
-            width: fit-content;
-
-            color: var(--text-muted);
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .total-block b {
+        .next-info strong {
             color: var(--text-main);
+            transition: color 0.3s;
         }
 
-        .donate-wrapper {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin-top: 8px;
-            margin-bottom: 16px;
-        }
+        /* QUEUE SELECTOR */
 
-        .donate-btn {
-            position: relative;
-            width: 100%;
-            height: 56px;
-            background: #1a1a1a;
-            border: none;
-            border-radius: 16px;
-            overflow: hidden;
-            text-decoration: none;
+        .queue-select {
+            margin-top: 10px;
             display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
             align-items: center;
-            justify-content: center;
-            transition: transform 0.2s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            margin-left: 0;
         }
 
-        .donate-btn:active { transform: scale(0.98); }
-
-        .donate-progress {
-            position: absolute; top: 0; left: 0; bottom: 0;
-            width: 0%;
-            background: linear-gradient(90deg, #FFC107, #FF9800);
-            opacity: 0.8;
-            transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
-            z-index: 1;
+        .select-wrapper {
+            position: relative;
         }
 
-        .tomorrow-hint {
-            text-align: center;
-            font-size: 14px;
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding: 8px 28px 8px 12px;
+            border-radius: var(--radius-pill);
+            border: 1px solid rgba(148,163,184,0.7);
+            font-size: 13px;
+            background: var(--surface-soft);
+            color: var(--text-main);
+            outline: none;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .dark-mode select {
+             border-color: rgba(255,255,255,0.3);
+             background: #1e293b;
+        }
+
+        .select-wrapper::after {
+            content: "▾";
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
             color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        /* TIMELINE */
+
+        .timeline-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 14px 14px 10px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-soft);
+            transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 10px;
         }
-        .hidden { display: none; }
 
-        .detail-hidden {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .25s ease;
-        }
-
-        /* --- SWIPE ANIMATION --- */
-        #app-content {
-            transition: transform 0.25s ease;
-        }
-
-        .swipe-left {
-            transform: translateX(-100%);
-        }
-        .swipe-right {
-            transform: translateX(100%);
-        }
-        .swipe-reset {
-            transform: translateX(0);
-        }
-
-        .donate-content {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            line-height: 1.3;
-        }
-
-        .donate-title {
+        .timeline-title {
             font-size: 15px;
-            font-weight: 800;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .donate-amount {
-            font-size: 13px;
             font-weight: 600;
-            color: rgba(255,255,255,0.7);
         }
 
-        /* --- TABS --- */
-        .tab-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: rgba(24, 24, 32, 0.95); backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(128,128,128,0.1);
-            display: flex; padding: 10px 20px 30px 20px;
-            justify-content: space-between; gap: 10px; z-index: 80;
+        .day-tabs {
+            display: inline-flex;
+            padding: 3px;
+            border-radius: var(--radius-pill);
+            background: rgba(148,163,184,0.1);
+            transition: background-color 0.3s;
         }
-        [data-theme="light"] .tab-bar { background: rgba(255, 255, 255, 0.95); }
-
-        .tab-item {
-            flex: 1; background: transparent; border: none; padding: 10px;
-            border-radius: 12px; color: var(--text-muted);
-            font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-align: center;
+        
+        .dark-mode .day-tabs {
+             background: rgba(255,255,255,0.1);
         }
 
-        .tab-item.active { background: var(--glass-bg); color: var(--text-main); }
+        .day-tab {
+            border: none;
+            background: transparent;
+            padding: 5px 10px;
+            border-radius: var(--radius-pill);
+            font-size: 11px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+        }
 
-        /* --- НОВИЙ MODERN TIMELINE --- */
-        .timeline-section {
-            width: 100%;
-            margin-top: 20px; /* Трохи більше повітря */
-            padding: 0 10px;
+        .day-tab.active {
+            background: var(--surface);
+            color: var(--text-main);
+            font-weight: 600;
+            box-shadow: 0 1px 4px rgba(15,23,42,0.2);
+        }
+        
+        .dark-mode .day-tab.active {
+             box-shadow: 0 1px 4px rgba(0,0,0,0.5);
         }
 
         .timeline-track {
             position: relative;
             width: 100%;
-            height: 19px; /* Тонка лінія */
-            display: flex;
-            align-items: center; /* Центруємо сегменти по вертикалі */
-            gap: 4px; /* Відступи між сегментами */
-            background: transparent;
-            padding: 0;
-            box-shadow: none;
-            overflow: visible;
+            height: 32px;
+            border-radius: var(--radius-pill);
+            background: var(--timeline-bg);
+            /* Важливо: тут НЕ треба flex, бо тут лежать шари (трек і курсор) */
+            display: block; 
+            overflow: hidden; /* Обрізаємо все, що вилазить за круглі краї */
+            margin-bottom: 6px;
         }
 
-        .segment {
-            position: relative;
-            height: 10px; 
-            border-radius: 4px; 
-            flex-grow: 1;
-            flex-basis: 0;
-            transition: all 0.3s ease;
-            opacity: 0.5; 
-            box-shadow: none !important; 
-            cursor: pointer;
+        #timelineTrack {
+            position: absolute;
+            inset: 0; /* Розтягуємо на всю ширину/висоту батька */
+            display: flex; /* А ось тут вже flex для шматочків */
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
 
-            /* 🔥 БУЛО 4px. ЗМІНЮЄМО НА 1px */
-            /* Це прибере візуальну "дірку", але залишить роздільник */
-            border-right: 1px solid var(--bg-color); 
+        .timeline-bg {
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                #0003,
+                #0003 4px,
+                transparent 4px,
+                transparent 8px
+            );
+        }
+
+        #timelineFill {
+            position: absolute;
+            inset: 0;
+            display: flex;
+        }
+
+        .timeline-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            overflow: hidden;
+            white-space: nowrap;
             
-            background-clip: padding-box; 
+            /* Це змушує сегменти слухатися JS flex-grow і не мати своєї ширини */
+            min-width: 0 !important;
+            width: 0 !important; 
+            flex-basis: 0;
+            
+            /* Додаємо розділювач між сегментами */
+            border-right: 1px solid rgba(0,0,0,0.1); 
             box-sizing: border-box;
         }
 
-        /* Активний сегмент (той, що зараз) */
-        .segment.active-segment {
-            /* Можна додати легке світіння */
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3);
-            z-index: 2;
+        /* Прибираємо рамку в останнього елемента */
+        .timeline-segment:last-child {
+            border-right: none;
         }
 
-        /* Кольори */
-        .on { background-color: #30d158; } /* Apple Green */
-        .off { background-color: #ff453a; } /* Apple Red */
+        .timeline-segment.off {
+            background: var(--chart-off) !important; 
+            color: #ffffff !important;      
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        /* Зелений стиль теж перевір, щоб був таким: */
+        .timeline-segment.on {
+            background: var(--chart-on);
+            color: #fff !important; 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
 
-        /* Прибираємо іконки з таймлайну для чистоти */
-        .segment-icon { display: none; }
-
-/* --- СУЧАСНИЙ КУРСОР (LIGHT BEAM) --- */
-        .cursor-line {
+        .timeline-now-indicator {
             position: absolute;
-            /* Центруємо по вертикалі відносно timeline-box */
-            top: 50%;
-            transform: translate(-50%, -50%); 
-            
-            height: 32px; 
-            width: 2px;   
-            
-            /* Градієнт... */
-            background: linear-gradient(to bottom, 
-                rgba(255,255,255,0) 0%, 
-                rgba(255,255,255,1) 30%, 
-                rgba(255,255,255,1) 70%, 
-                rgba(255,255,255,0) 100%
-            );
-            
-            box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
-
-            /* 🔥 НАЙВИЩИЙ Z-INDEX, щоб бути над усім */
-            z-index: 9999; 
-            
+            top: 0;
+            bottom: 0; /* На всю висоту */
+            width: 2px;
+            background: #ffffff; /* Біла лінія краще читається на кольоровому */
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            z-index: 10; /* Поверх графіку */
             pointer-events: none;
-            /* Прибираємо плавність, щоб курсор не "відставав" при ресайзі */
-            /* transition: left 1s linear; */ 
+            border-radius: 0;
+            height: auto; /* Скидаємо фіксовану висоту */
         }
 
-        /* Переконайся, що батьківський контейнер має position: relative */
-        .timeline-box {
-            position: relative;
-            padding: 0 10px;
-        }
-        
-        /* Текст часу */
-        .t-label {
-            position: absolute;
-            
-            /* 🔥 Трохи опустив текст (було 4px), щоб дати місце довгій рисці */
-            top: 8px; 
-            
-            font-size: 10px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.5);
-            
-            transform: translateX(-50%);
-            white-space: nowrap;
-            letter-spacing: 0.3px;
-        }
-
-        .t-tick {
-            display: block;
-            position: absolute;
-            
-            /* Початок від низу кольорової смужки */
-            top: -6px; 
-            
-            width: 1px;
-            height: 12px; /* 🔥 БУЛО 7px. Зробив значно довшими */
-            
-            /* Трохи прозорі, щоб не різали очі */
-            background: rgba(255, 255, 255, 0.2); 
-            
-            transform: translateX(-50%);
-            z-index: 1;
-        }
-
-        /* --- POPUP MENU (FAB) --- */
-        .fab-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-            z-index: 89; opacity: 0; visibility: hidden; transition: all 0.3s ease;
-        }
-        .fab-overlay.active { opacity: 1; visibility: visible; }
-
-        .fab-container {
-            position: fixed;
-            bottom: 90px;     /* було 70 — замінити */
-            right: 20px;
-            z-index: 90;
-
-            pointer-events: none; /* як було */
-
-            display: flex;           /* ДОДАТИ */
-            flex-direction: column;  /* ДОДАТИ */
-            align-items: flex-end;   /* ДОДАТИ */
-        }
-
-        .segment-icon {
-            width: 20px;
-            height: 20px;
-            z-index: 2;
-            opacity: 0.9;
-            
-            /* Центрування */
+        .timeline-labels {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            
-            /* Тінь для об'єму */
-            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
-        }
-        
-        /* Робимо SVG білими */
-        .segment-icon svg {
-            width: 100%;
-            height: 100%;
-            fill: #ffffff; /* Білий колір */
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 10px;
+            color: var(--text-muted);
         }
 
-        .fab-main {
-            width: 54px; height: 54px; border-radius: 50%;
-            background: var(--accent-green); color: white;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 26px; cursor: pointer;
-            box-shadow: 0 4px 20px rgba(46, 204, 113, 0.5);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s;
-            flex-shrink: 0;
-            pointer-events: auto; /* клікабельна */
-        }
-        .fab-main:active { transform: scale(0.9); }
-        .fab-container.active .fab-main {
-            transform: rotate(90deg);
-            background: var(--accent-red);
-            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.5);
-        }
-
-        .day-title,
-        .date-text {
-            font-size: 15px;
-            font-weight: 600;
-            text-transform: uppercase;
-            white-space: nowrap;
-            letter-spacing: 0.5px;
-            text-align: center;
-            color: rgba(255,255,255,0.65);
-        }
-
-        .date-line {
-            width: 100%;
-            height: 1px;
-            background: rgba(255,255,255,0.18);
-        }
-
-        .segment.on.segment-selected {
-            box-shadow: 0 0 10px 3px rgba(46, 204, 113, 0.6);
-        }
-
-        .segment.off.segment-selected {
-            box-shadow: 0 0 10px 3px rgba(231, 76, 60, 0.6);
-        }
-
-        /* світла тема */
-        [data-theme="light"] .date-line {
-            background: rgba(0,0,0,0.15);
-        }
-
-        [data-theme="light"] .day-title,
-        [data-theme="light"] .date-text {
-            color: rgba(0,0,0,0.65);
-        }
-
-        .day-body {
-            transition: opacity 0.22s ease, transform 0.25s ease;
-        }
-
-        .day-body.slide-left {
-            opacity: 0;
-            transform: translateX(-40px);
-        }
-
-        .day-body.slide-right {
-            opacity: 0;
-            transform: translateX(40px);
-        }
-
-
-        /* Темна тема */
-        [data-theme="dark"] .day-title,
-        [data-theme="dark"] .date-text {
-            color: rgba(255,255,255,0.65);
-        }
-
-        /* 🔥 Анімація плавного оновлення дати */
-        .date-box {
-            transition: opacity .25s ease, transform .25s ease;
-        }
-
-        .date-box.anim-hide {
-            opacity: 0;
-            transform: translateX(-20px);
-        }
-
-        .date-box.anim-show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .no-anim * {
-            transition: none !important;
-            animation: none !important;
-        }
-
-        .fab-menu {
+        .slots-list {
+            margin-top: 8px;
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .slot-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 6px;
+        }
+        
+        .slots-list > .slot-row:last-child {
+             border-bottom: none;
+        }
+
+        .slot-time {
+            font-weight: 600;
+        }
+
+        .slot-duration {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .slot-tag {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 11px;
+            transition: 0.3s;
+            border: 1px solid transparent; /* рамка */
+        }
+
+        .slot-tag.on {
+            background: var(--status-on-bg);
+            color: var(--status-on-text);
+            border-color: var(--status-on-border);
+        }
+        
+        .slot-tag.off {
+            background: var(--status-off-bg);
+            color: var(--status-off-text);
+            border-color: var(--status-off-border);
+        }
+
+        .dark-mode .slot-tag {
+             background: rgba(255,255,255,0.1);
+        }
+
+        /* SIDE CARD: LEGEND, INFO */
+
+        .info-list {
+            margin-top: 6px;
+            padding-left: 18px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .legend {
+            margin-top: 8px;
+            display: grid;
+            grid-template-columns: minmax(0,1fr);
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-dot.on {
+            background: var(--timeline-bg);
+        }
+
+        .legend-dot.off {
+            background: var(--timeline-off-bg);
+        }
+
+        .support-section {
+            margin-top: 10px;
+            padding-top: 9px;
+            border-top: 1px dashed rgba(148,163,184,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+        }
+        
+        .dark-mode .support-section {
+             border-top-color: rgba(255,255,255,0.3);
+        }
+
+
+        .support-btn {
+            border-radius: var(--radius-pill);
+            padding: 9px 12px;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #ecfdf5;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .support-btn:hover {
+            opacity: 0.9;
+        }
+
+        .support-btn span.icon {
+            font-size: 15px;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
             gap: 10px;
-            margin-bottom: 5px;
-            pointer-events: none; /* активується тільки коли контейнер active */
-        }
-        .fab-container.active .fab-menu { pointer-events: auto; }
-
-        .fab-item {
-            background: var(--card-bg); color: var(--text-main);
-            border: 1px solid rgba(128,128,128,0.15);
-            padding: 10px 16px 10px 20px; border-radius: 30px;
-            display: flex; align-items: center; justify-content: flex-end; gap: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer;
-            opacity: 0;
-            transform: translateY(20px) scale(0.8);
-            transform-origin: right bottom;
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            flex-wrap: wrap;
         }
 
-        .fab-container.active .fab-item { opacity: 1; transform: translateY(0) scale(1); }
-        .fab-item:active { transform: scale(0.95); background: var(--glass-bg); }
-
-        .fab-text { font-size: 14px; font-weight: 600; }
-        .fab-emoji { font-size: 18px; line-height: 1; width: 24px; text-align: center; }
-
-        .fab-item:nth-last-child(1) { transition-delay: 0.05s; }
-        .fab-item:nth-last-child(2) { transition-delay: 0.1s;  }
-        .fab-item:nth-last-child(3) { transition-delay: 0.15s; }
-        .fab-item:nth-last-child(4) { transition-delay: 0.2s;  }
-        .fab-item:nth-last-child(5) { transition-delay: 0.25s; }
-
-        /* --- MODAL --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 99;
-            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(5px);
-        }
-        .modal-overlay.show { opacity: 1; visibility: visible; }
-
-        .queue-list {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            background: var(--card-bg);
-            border-top: 1px solid rgba(128,128,128,0.1);
-            border-radius: 24px 24px 0 0;
-            padding: 20px; max-height: 70vh; overflow-y: auto;
-            transform: translateY(100%); transition: 0.3s;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-        }
-        .modal-overlay.show .queue-list { transform: translateY(0); }
-        .q-item {
-            padding: 16px; margin-bottom: 8px; background: var(--glass-bg);
-            border-radius: 12px; text-align: center; font-weight: 600; cursor: pointer; color: var(--text-main);
-        }
-        .q-item.active { background: #3498db; color: white; }
-
-        #detailCardContainer {
-            transition: height .28s ease, opacity .28s ease, padding .28s ease;
-            overflow: hidden;
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s;
         }
 
-        #detailCardContainer.closing {
-            height: 0 !important;
-            opacity: 0 !important;
-            padding: 0 !important;
-        }
-
-        /* --- INFO MODAL --- */
-        .info-modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 100;
-            backdrop-filter: blur(5px); opacity: 0; visibility: hidden; transition: 0.3s;
-            display: flex; align-items: center; justify-content: center; padding: 20px;
-        }
-        .info-modal-overlay.show { opacity: 1; visibility: visible; }
-
-        .info-card {
-            background: var(--card-bg); border-radius: 20px; padding: 24px;
-            width: 100%; max-width: 340px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transform: scale(0.9); transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            border: 1px solid rgba(128,128,128,0.1);
-        }
-        .info-modal-overlay.show .info-card { transform: scale(1); }
-
-        .info-title { font-size: 20px; font-weight: 800; margin-bottom: 12px; color: var(--text-main); }
-        .info-text { font-size: 14px; line-height: 1.6; color: var(--text-muted); margin-bottom: 20px; }
-        .info-text a { color: var(--accent-green); text-decoration: none; font-weight: 600; }
-        .info-close {
-            width: 100%; padding: 12px; border-radius: 12px;
-            background: var(--accent-green); color: white;
-            font-weight: 700; border: none; cursor: pointer;
-        }
-
-        /* --- UTILS --- */
-        .hidden { display: none !important; }
-        .no-data-msg {
-            text-align: center; color: var(--text-muted); padding: 30px 20px;
-            background: var(--glass-bg); border-radius: 16px; font-size: 15px; margin-top: 12px;
-        }
-        .offline-badge {
-            position: fixed; top: 10px; right: 10px; background: rgba(255, 69, 58, 0.9);
-            color: white; padding: 4px 10px; border-radius: 8px; font-size: 11px; z-index: 100;
-            font-weight: bold; backdrop-filter: blur(4px);
-        }
-
-        /* Skeleton */
-        .skeleton-wrapper {
-            width: 100%; max-width: 500px; padding: 20px 24px;
-            display: flex; flex-direction: column; gap: 20px; margin: 0 auto; margin-top: 20px;
-        }
-        .skeleton {
-            background: linear-gradient(90deg, var(--card-bg) 25%, var(--bg-color) 50%, var(--card-bg) 75%);
-            background-size: 200% 100%; animation: shimmer 1.5s infinite linear; border-radius: 16px;
-        }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .sk-battery { height: 80px; width: 100%; margin-bottom: 10px; border-radius: 24px; }
-        .sk-date { height: 20px; width: 150px; margin: 0 auto; }
-        .sk-timeline { height: 60px; width: 100%; }
-        .sk-card { height: 80px; width: 100%; }
-
-           /* --- MOBILE FIXES (ОЧИЩЕНО) --- */
-        @media (max-width: 360px) {
-            .c-dur {
-                flex-direction: column;
-                align-items: flex-end;
-                gap: 2px;
-                font-size: 12px;
-            }
-        }
-
-            /* Трохи зменшуємо текст на мобільних */
-            .day-title,
-            .date-text {
-                font-size: 12px !important; /* Було 13, зробив 12 щоб точно влізло */
-                letter-spacing: 0.3px;
+        /* MOBILE */
+/* MOBILE */
+        @media (max-width: 840px) {
+            .top-bar {
+                display: flex;       /* Вмикаємо рядок */
+                align-items: center; /* Рівняємо по центру висоти */
+                gap: 8px;            /* Відступи між елементами */
+                flex-wrap: nowrap;   /* Забороняємо перенос на новий рядок */
+                min-height: 50px;
+                padding-bottom: 0;
             }
 
-            /* 🔥 ПРИБРАВ блок .date-box, щоб він не заважав розкидати текст по краях */
-            /* 🔥 ПРИБРАВ .date-line, бо ліній більше немає */
-
-            /* Фікси для шкали часу залишаємо */
-            .timeline-section {
-                margin-top: -4px !important;
+            /* Прибираємо "обгортку" кнопок, щоб вони стали в один ряд з лого */
+            .header-controls {
+                display: contents;
             }
 
-            .t-label {
-                font-size: 10px !important;
+            /* Логотип: фіксований, не стискається */
+            .brand {
+                flex-shrink: 0;
+                margin: 0;
+                max-width: 45%; /* Обмеження, щоб не займав весь екран */
+            }
+            
+            /* Відновлюємо підпис "Київщина" */
+            .brand-sub {
+                display: block;
             }
 
-        .time-labels {
-            position: relative;
-            width: 100%;
-            height: 20px;
-            margin-top: 4px; /* Мінімальний відступ від смужки */
-            padding: 0;
-            left: 0;
-        }
-        }
-
-        html[data-theme="light"] .card-details {
-            color: var(--text-card-detail) !important;
-            background: transparent !important;
-            border-top: none !important;
-        }
-
-        html[data-theme="light"] .card.expanded .card-details {
-            max-height: 300px !important;
-            opacity: 1 !important;
-        }
-
-        @keyframes detailCardClose {
-            from {
-                opacity: 1;
-                transform: translateY(0) scale(1);
+            /* Чіп: ГУМОВИЙ (займає все вільне місце посередині) */
+            .region-chip {
+                flex-grow: 1;    /* Росте, займаючи пустоту */
+                flex-shrink: 1;  /* Стискається, якщо місця мало */
+                min-width: 0;    /* Магія CSS: дозволяє стискатися менше контенту */
+                
+                /* Стиль тексту */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis; /* Три крапки, якщо не влазить */
+                
+                margin: 0;
+                padding: 6px 8px;
+                font-size: 10px; /* Трохи менший шрифт */
+                justify-content: center;
             }
-            to {
-                opacity: 0;
-                transform: translateY(10px) scale(0.92);
+
+            /* Кнопка теми: фіксована справа */
+            .theme-switch {
+                flex-shrink: 0;
+                margin: 0;
             }
-        }
 
-        .detail-wrapper {
-            transition: all 0.35s ease;
+            /* Зменшені відступи для контенту */
+            .hero-card { padding: 14px 16px 18px; }
+            .hero-title { font-size: 22px; }
+            .main-grid { grid-template-columns: 1fr; }
         }
-
-        .detail-wrapper.hidden {
-            opacity: 0;
-            transform: translateY(-10px);
-            margin-top: -20px;
-        }
-
     </style>
 </head>
 <body>
-
-    <div class="top-bar">
-        <span class="updated" id="topUpdated">Оновлено…</span>
-        <span style="flex: 1;"></span>
-        <span class="users">
-            <span class="icon">👥</span>
-            <span id="topUsers">…</span>
-        </span>
-    </div>
-
-    <div class="header">
-        <div class="queue-select-btn" onclick="toggleModal()">
-            <span id="queueTitle">Завантаження...</span>
-            <span class="arrow-icon">▼</span>
-        </div>
-    </div>
-
-    <div id="skeletonLoader" class="skeleton-wrapper">
-        <div class="sk-battery skeleton"></div>
-        <div class="sk-date skeleton"></div>
-        <div class="sk-timeline skeleton"></div>
-        <div class="sk-card skeleton"></div>
-        <div class="sk-card skeleton"></div>
-        <div class="sk-card skeleton"></div>
-    </div>
-
-    <div id="app-content" class="hidden">
-
-        <!-- Батарейка (стаціонарна) -->
-        <div id="batterySection" class="battery-container">
-
-            <div class="battery-wrapper" onclick="animateBattery()">
-
-                <div class="battery-shell"> <div id="batteryFill" class="battery-fill"></div>
-                    <div class="battery-text" id="batteryTimer">--:--</div>
-                </div>
-
-                <div class="battery-tip"></div>
+<div class="page">
+    <header class="top-bar">
+        <div class="brand">
+            <div class="brand-logo" aria-hidden="true">
+                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fefce8"/>
+                            <stop offset="45%" stop-color="#facc15"/>
+                            <stop offset="100%" stop-color="#f97316"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="20" cy="20" r="18" fill="rgba(15,23,42,0.35)"/>
+                    <circle cx="20" cy="20" r="13" fill="url(#boltGrad)"/>
+                    <path d="M22.8 8.5 13.2 22.1c-.4.6 0 1.4.7 1.4h4.3l-1.0 7.9c-.1.9.9 1.4 1.5.7l9.5-13.9c.4-.6 0-1.4-.7-1.4h-4.3l1.1-7.7c.1-.9-.9-1.5-1.5-.8z"
+                          fill="#f97316" opacity="0.22"/>
+                    <path d="M22.2 9.5 14 21.4c-.5.7 0 1.6.8 1.6h3.9l-1.0 6.6c-.2 1 1 1.6 1.7.8L27.7 19c.5-.7 0-1.6-.8-1.6H23l1.0-6.2c.3-1-0.9-1.8-1.8-1.1z"
+                          fill="url(#boltGrad)"/>
+                </svg>
             </div>
-
-            <div class="battery-status" id="batteryLabel">статус</div>
+            <div class="brand-text">
+                <div class="brand-name">SvitloUA</div>
+                <div class="brand-sub">Київщина</div>
+            </div>
         </div>
 
-
-        <!-- 🔥 Увесь контент дня, який "слайдиться" між Сьогодні/Завтра -->
-        <div id="dayBody" class="day-body">
-
-            <div class="timeline-section" id="timelineSection">
-                <div class="timeline-box">
-                    <div class="timeline-track" id="timelineTrack"></div>
-                    <div class="time-labels" id="timeLabelsBox"></div>
-                </div>
-                <div id="detailCardContainer" class="detail-card-container hidden"></div>
+        <div class="header-controls"> 
+            <div class="region-chip">
+                <span class="region-dot"></span>
+                Київська область • онлайн-графік
             </div>
+            <button class="theme-switch" id="themeToggle" title="Перемкнути тему">
+                🌙
+            </button>
+        </div>
+    </header>
 
-                    <!-- Дата (стаціонарна) -->
 
-            <div class="date-box">
-                <span id="dayTitle" class="day-title">Графік на сьогодні</span>
-                <span id="dateDisplay" class="date-text">---</span>
-            </div>
+    <section class="hero-card">
+        <div class="hero-main">
+            <h1 class="hero-title">
+                Графік відключень електроенергії у <span>Київській області</span>
+            </h1>
+            <p class="hero-subline">
+                Обирайте свою чергу — отримуйте зрозумілий графік відключень, таймер до наступного
+                відключення та наочну шкалу на 24&nbsp;години.
+            </p>
 
-            <div id="emergencyBanner" class="emergency-banner hidden" onclick="showEmergency()">
-                🚨 Зараз діють екстренні відключення
-            </div>
-
-            <div id="noDataMessage" class="no-data-msg hidden">💤 Графік на цей день ще не сформовано</div>
-
-            <div class="card-list" id="infoBox"></div>
-
-            <div id="shareWrapper" class="share-wrapper">
-                <button class="share-minimal-btn" onclick="openTelegramShare()">🔗 Поділитися графіком</button>
-            </div>
-
-            <div style="text-align:center;">
-                <div class="total-block" id="totalBox"></div>
-            </div>
-
-            <a id="telegramShareNative" class="hidden"></a>
-
-            <div class="donate-wrapper">
-                <a href="https://send.monobank.ua/jar/6qoHuhpGgD" target="_blank" class="donate-btn">
-                    <div class="donate-progress" id="donateProgress"></div>
-                    <div class="donate-content">
-                        <div class="donate-title">
-                            <span>🔌</span> <span>Підзарядити бота</span>
-                        </div>
-                        <div class="donate-amount" id="donateAmount">Завантаження...</div>
-                    </div>
+            <div class="hero-controls">
+                <a href="https://t.me/SvitloBroBot" target="_blank" class="primary-btn">
+                    <span class="icon">⚡</span>
+                    Підключити сповіщення
                 </a>
-            </div>
 
-        </div> <!-- /dayBody -->
-
-        <div id="emergencyOverlay" class="emergency-overlay" onclick="closeEmergency()">
-            <div class="emergency-box" onclick="event.stopPropagation()">
-                <div class="emergency-title">🚨 ЕКСТРЕНІ ВІДКЛЮЧЕННЯ</div>
-                <div class="emergency-text">
-                    Ваше світло можуть вимкнути будь-коли, незалежно від графіку.
+                <div class="secondary-pill">
+                    Сьогодні: <strong id="currentQueueLabel">1.1 черга</strong>
+                    <span style="opacity:.7;">• дані оновлюються з Google Sheets</span>
                 </div>
-                <button class="emergency-btn" onclick="closeEmergency()">Зрозуміло</button>
+            </div>
+
+            <div class="hero-footer">
+                <span class="badge">
+                    <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 1.5 4 3.5v5.6c0 3.6 2.5 6.9 6 7.9 3.5-1 6-4.3 6-7.9V3.5L10 1.5z"
+                              fill="#bbf7d0"/>
+                        <path d="M10 3 5.5 4.5v4.5C5.5 11.9 7.3 14.1 10 15c2.7-.9 4.5-3.1 4.5-6V4.5L10 3z"
+                              fill="#22c55e"/>
+                        <path d="M9.1 11.5 7.3 9.7l.9-.9 1 1 3-3 .9.9-3.9 3.8z" fill="#f0fdf4"/>
+                    </svg>
+                    Дані неофіційні, але максимально близькі до реальності
+                </span>
+                <span>Базується на відкритій таблиці Google Sheets. Фактичні відключення можуть відрізнятися через аварії та екстрені обмеження.</span>
             </div>
         </div>
+    </section>
 
-    </div> <!-- /app-content -->
-
-    <div class="modal-overlay" id="modal" onclick="toggleModal()">
-        <div class="queue-list" id="queueList" onclick="event.stopPropagation()"></div>
-    </div>
-
-    <div class="tab-bar">
-        <div class="tab-item active" id="tab1" onclick="switchTab(1)">Сьогодні</div>
-        <div class="tab-item" id="tab2" onclick="switchTab(2)">Завтра</div>
-    </div>
-
-    <div class="fab-overlay" id="fabOverlay" onclick="toggleFab()"></div>
-
-    <div class="fab-container" id="fabContainer">
-        <div class="fab-menu">
-
-            <div class="fab-item" onclick="showInfo('about')">
-                <span class="fab-text">Про бота</span>
-                <span class="fab-emoji">🤖</span>
+    <div class="main-grid">
+        <div class="timeline-card">
+            <div class="timeline-header">
+                <div class="timeline-title">Відключення сьогодні</div>
+                <div class="day-tabs" id="dayTabs">
+                    <button class="day-tab active" data-day="today">Сьогодні</button>
+                    <button class="day-tab" data-day="tomorrow">Завтра</button>
+                </div>
             </div>
 
-            <div class="fab-item" onclick="showInfo('collab')">
-                <span class="fab-text">Співпраця</span>
-                <span class="fab-emoji">🤝</span>
+            <div class="queue-select">
+                <div class="select-wrapper">
+                    <select id="queueSelect">
+                        <option value="1.1">1 черга (1 підгрупа)</option>
+                        <option value="1.2">1 черга (2 підгрупа)</option>
+                        <option value="2.1">2 черга (1 підгрупа)</option>
+                        <option value="2.2">2 черга (2 підгрупа)</option>
+                        <option value="3.1">3 черга (1 підгрупа)</option>
+                        <option value="3.2">3 черга (2 підгрупа)</option>
+                        <option value="4.1">4 черга (1 підгрупа)</option>
+                        <option value="4.2">4 черга (2 підгрупа)</option>
+                        <option value="5.1">5 черга (1 підгрупа)</option>
+                        <option value="5.2">5 черга (2 підгрупа)</option>
+                        <option value="6.1">6 черга (1 підгрупа)</option>
+                        <option value="6.2">6 черга (2 підгрупа)</option>
+                    </select>
+                </div>
+
+                <span style="font-size:12px;color:var(--text-muted);">
+                    Графік підтягується з таблиці Google — оновлення кожні кілька хвилин.
+                </span>
             </div>
 
-            <div class="fab-item" onclick="showInfo('queue')">
-                <span class="fab-text">Черга</span>
-                <span class="fab-emoji">❓</span>
+            <div style="margin-top:12px;">
+                <div class="timeline-track">
+                    <div id="timelineTrack"></div>
+                    <div class="timeline-now-indicator" id="nowIndicator" style="display:none;"></div>
+                </div>
+                <div class="timeline-labels">
+                    <span>00:00</span>
+                    <span>06:00</span>
+                    <span>12:00</span>
+                    <span>18:00</span>
+                    <span>24:00</span>
+                </div>
             </div>
 
-            <div class="fab-item" onclick="showInfo('faq')">
-                <span class="fab-text">Питання-відповіді</span>
-                <span class="fab-emoji">💬</span>
-            </div>
-
-            <div class="fab-item" onclick="showInfo('emergency')">
-                <span class="fab-text">Аварійні служби</span>
-                <span class="fab-emoji">🚨</span>
-            </div>
-
-            <div class="fab-item" onclick="showInfo('support')">
-                <span class="fab-text">Донат</span>
-                <span class="fab-emoji">💚</span>
-            </div>
-
-            <div class="fab-item" onclick="universalShare()">
-                <span class="fab-text">Поділитися</span>
-                <span class="fab-emoji">📤</span>
-            </div>
-
-
-            <div class="fab-item" onclick="toggleTheme()" id="fabThemeBtnBlock">
-                <span class="fab-text">Тема</span>
-                <span class="fab-emoji" id="fabThemeIcon">🌙</span>
-            </div>
+            <div class="slots-list" id="slotsList">
+                </div>
         </div>
 
-        <div class="fab-main" onclick="toggleFab()">
-            <span class="fab-icon">☰</span>
-        </div>
+        <aside class="card">
+            <div class="card-header">
+                <div class="card-title">Найближче відключення</div>
+                <div class="chip" id="queueShortLabel">1.1 черга</div>
+            </div>
+
+            <div class="countdown" id="countdownBox">
+                <div class="countdown-block">
+                    <div class="countdown-value" id="cdHours">--</div>
+                    <div class="countdown-label">год</div>
+                </div>
+                <div class="countdown-block">
+                    <div class="countdown-value" id="cdMinutes">--</div>
+                    <div class="countdown-label">хв</div>
+                </div>
+                <div class="countdown-block">
+                    <div class="countdown-value" id="cdSeconds">--</div>
+                    <div class="countdown-label">сек</div>
+                </div>
+            </div>
+
+            <div class="next-info" id="nextInfoText">
+                Очікуємо дані з таблиці…
+            </div>
+
+            <ul class="info-list">
+                <li>Графік є орієнтовним. При екстрених відключеннях час може зміщуватися.</li>
+                <li>Місцеві аварії (обриви, пошкодження кабелів, роботи ЖЕКів) тут не відображаються.</li>
+            </ul>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="legend-dot off"></span>
+                    <span>Темна ділянка — немає електроенергії</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot on"></span>
+                    <span>Світла ділянка — електроенергія присутня</span>
+                </div>
+            </div>
+
+            <div class="support-section">
+                <div>Якщо у вас є світло — будь ласка, використовуйте електроенергію розумно. Не вмикайте потужні прилади одночасно.</div>
+                <button class="support-btn" type="button" onclick="window.open('https://send.monobank.ua', '_blank')">
+                    <span class="icon">💚</span>
+                    Підтримати проєкт SvitloUA
+                </button>
+            </div>
+        </aside>
     </div>
 
-    <div class="info-modal-overlay" id="infoModal" onclick="closeInfo()">
-        <div class="info-card" onclick="event.stopPropagation()">
-            <div class="info-title" id="infoTitle"></div>
-            <div class="info-text" id="infoText"></div>
-            <button class="info-close" onclick="closeInfo()">Зрозуміло</button>
-        </div>
-    </div>
+    <footer>
+        <span>© <span id="year"></span> SvitloUA Київщина. Неофіційний сервіс для зручного перегляду графіків.</span>
+        <span>Джерело графіків: <a href="https://docs.google.com/spreadsheets/d/1LZWXZ6w5R4Lq5afipAa1YHjLyO8lVizPvRCPdOvdmbc" target="_blank" rel="noopener noreferrer">Google Sheets</a></span>
+    </footer>
+</div>
 
 <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    const SHEET_ID = "1LZWXZ6w5R4Lq5afipAa1YHjLyO8lVizPvRCPdOvdmbc";
+    const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-    function getUrlParam(name) {
-        const url = new URL(window.location.href);
-        return url.searchParams.get(name);
-    }
+    const COLUMN_GROUP_ID = "group_id";
+    const COLUMN_SCHEDULE_TEXT = "schedule_text";
+    const dayNamesUa = ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "Пʼятниця", "Субота"];
 
-    (function applyStartAppData() {
-        let param = null;
-        const fromUrl = getUrlParam("startapp");
-        if (fromUrl) param = fromUrl;
-        if (!param) param = tg.initDataUnsafe?.start_param;
-        if (!param) return;
-
-        try {
-            const json = JSON.parse(atob(param.replace(/-/g, '+').replace(/_/g, '/')));
-            if (json.updated) document.getElementById("topUpdated").innerText = "Оновлено: " + json.updated;
-            if (json.users_total || json.users) {
-                const raw = json.users_total || json.users;
-                const clean = formatUsersNumber(raw);
-                document.getElementById("topUsers").innerText = clean;
-                window.STARTAPP_USERS = clean;
-            }
-            if (json.queue) {
-                currentQueue = json.queue;
-                localStorage.setItem('savedQueue', json.queue);
-            }
-        } catch (err) { console.error(err); }
-    })();
-
-    const CSV_PROXY_URL = "https://shy-fog-bb74svitlo-proxy.propro3107.workers.dev";
-    let allData = [];
+    let allRows = [];
     let currentQueue = "1.1";
-    let currentTab = 1;
-    let countdownInterval;
-    let activeSegmentElement = null;
-    let activeListCard = null;
-    let cursor = null;
+    let currentDayMode = "today";
+    let countdownInterval = null;
 
-    function ensureCursor() {
-        if (!cursor) {
-            cursor = document.createElement('div');
-            cursor.id = 'timeline-cursor';
-            cursor.className = 'cursor-line';
-        }
-    }
+    // Елементи
+    const timelineTrack = document.getElementById("timelineTrack");
+    const nowIndicator = document.getElementById("nowIndicator");
+    const slotsList = document.getElementById("slotsList");
+    const cdH = document.getElementById("cdHours");
+    const cdM = document.getElementById("cdMinutes");
+    const cdS = document.getElementById("cdSeconds");
+    const nextInfo = document.getElementById("nextInfoText");
+    const queueSelect = document.getElementById("queueSelect");
+    const queueShortLabel = document.getElementById("queueShortLabel");
+    const currentQueueLabel = document.getElementById("currentQueueLabel");
+    const body = document.body;
+    const themeToggle = document.getElementById("themeToggle");
 
-    // автооновлення даних
-    setInterval(() => init(true), 120000);
+    // === 1. ПАРСИНГ ДАНИХ ===
 
-    async function getCSV(retries = 5) {
-        const url = `${CSV_PROXY_URL}?t=${Date.now()}`;
+    function parseGviz(jsonText) {
         try {
-            const r = await fetch(url, { cache: "no-cache" });
-            if (!r.ok) throw new Error("Bad status " + r.status);
-            return await r.text();
-        } catch (e) {
-            if (retries > 0) return getCSV(retries - 1);
-            throw e;
-        }
-    }
+            const start = jsonText.indexOf("{");
+            const end = jsonText.lastIndexOf("}");
+            const json = JSON.parse(jsonText.substring(start, end + 1));
+            
+            let lastGroupId = null;
+            const outputRows = [];
+            
+        json.table.rows.forEach(r => {
+                const rowData = r.c;
+                if (!rowData) return;
 
-    async function fetchDonation() {
-        try {
-            const url = `${CSV_PROXY_URL}?jar=true&t=${Date.now()}`;
-            const r = await fetch(url);
-            const data = await r.json();
+                let currentGroupId = '';
+                // 💡 ПРАВКА: Пріоритет на форматований текст (.f), бо .v може бути Date(...)
+                if (rowData[0]) {
+                    currentGroupId = String(rowData[0].f || rowData[0].v || '').trim();
+                }
+                
+                let scheduleText = '';
+                if (rowData[1]) {
+                    scheduleText = String(rowData[1].v || rowData[1].f || '').trim();
+                }
 
-            if (data.amount !== undefined) {
-                updateDonateUI(data.amount, data.goal);
-            }
-        } catch (e) {
-            console.error("Donation error:", e);
-            document.getElementById('donateAmount').innerText = "Монобанка";
-        }
-    }
+                // Логіка об'єднання комірок
+                if ((currentGroupId === '' || currentGroupId === 'null') && lastGroupId !== null) {
+                    currentGroupId = lastGroupId;
+                } else if (currentGroupId !== '' && currentGroupId !== 'null') {
+                    lastGroupId = currentGroupId;
+                }
 
-            // === ANIMATED SWIPE CONTROL ===
-
-        let touchStartX = 0;
-        let touchEndX = 0;
-        let swipeLocked = false; // щоб не дублікувати свайпи
-
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, false);
-
-        document.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleAnimatedSwipe();
-        }, false);
-
-        function handleAnimatedSwipe() {
-            if (swipeLocked) return;
-
-            const dx = touchEndX - touchStartX;
-
-            // Поріг спрацювання (60 пікселів)
-            if (Math.abs(dx) < 60) return;
-
-            // Свайп ВЛІВО (йдемо на Завтра)
-            if (dx < 0 && currentTab === 1) {
-                swipeLocked = true;
-                try { tg.HapticFeedback.selectionChanged(); } catch(e){}
-                switchTab(2);
-                // Розблокуємо свайп, коли закінчиться анімація switchTab
-                setTimeout(() => { swipeLocked = false; }, 300);
-            }
-
-            // Свайп ВПРАВО (повертаємось на Сьогодні)
-            else if (dx > 0 && currentTab === 2) {
-                swipeLocked = true;
-                try { tg.HapticFeedback.selectionChanged(); } catch(e){}
-                switchTab(1);
-                setTimeout(() => { swipeLocked = false; }, 300);
-            }
-        }
-
-        function scrollToActiveQueue() {
-            const box = document.getElementById("queueList");
-            const active = box.querySelector(".q-item.active");
-            if (!active) return;
-
-            const offset = active.offsetTop - (box.clientHeight / 2) + (active.clientHeight / 2);
-
-            box.scrollTo({
-                top: offset,
-                behavior: "smooth"
+                if (currentGroupId && scheduleText) {
+                    outputRows.push({
+                        [COLUMN_GROUP_ID]: currentGroupId,
+                        [COLUMN_SCHEDULE_TEXT]: scheduleText
+                    });
+                }
             });
-
-            active.classList.add("pulse");
-            setTimeout(() => active.classList.remove("pulse"), 1200);
-        }
-
-    function animateBattery() {
-        const wrapper = document.querySelector('.battery-wrapper');
-        if (wrapper) wrapper.classList.toggle('battery-enlarged');
-        try { tg.HapticFeedback.selectionChanged(); } catch (e) { }
-    }
-
-    function showEmergency() {
-        document.getElementById("emergencyOverlay").classList.add("show");
-    }
-
-    function closeEmergency() {
-        document.getElementById("emergencyOverlay").classList.remove("show");
-        localStorage.setItem("emergency_ack", "1");
-    }
-
-    async function init(isSilent = false) {
-        loadTheme();
-        try {
-            if (!isSilent) {
-                const sk = document.getElementById('skeletonLoader');
-                if (sk) sk.classList.remove('hidden');
-                document.getElementById('app-content').classList.add('hidden');
-            }
-
-            const csvText = await getCSV();
-            allData = parseCSV(csvText);
-
-            const primary = normalizeHeaders(allData[0]);
-            if (primary.emergency === "on") {
-                document.getElementById("emergencyBanner").classList.remove("hidden");
-                const ack = localStorage.getItem("emergency_ack");
-                if (!ack) {
-                    setTimeout(() => { showEmergency(); }, 3000);
-                }
-            } else {
-                document.getElementById("emergencyBanner").classList.add("hidden");
-                localStorage.removeItem("emergency_ack");
-            }
-
-            window.LAST_UPDATED = null;
-            for (const row of allData) {
-                if (row.updated_at && row.updated_at.trim() !== "") {
-                    window.LAST_UPDATED = row.updated_at.trim();
-                    break;
-                }
-            }
-            updateTopUpdated();
-
-            if (!allData.length) throw new Error("Empty Data");
-
-            localStorage.setItem('cachedData', JSON.stringify(allData));
-            removeOfflineBadge();
-
-            const sk = document.getElementById('skeletonLoader');
-            if (sk) sk.classList.add('hidden');
-
-            setupApp(isSilent);
-
-            const row = allData.find(r => r.group_id == currentQueue);
-            if (row) {
-                const cleanRow = normalizeHeaders(row);
-                let u = cleanRow.users_total || cleanRow.users;
-
-                if (!u && allData.length > 0) {
-                    const primary = normalizeHeaders(allData[0]);
-                    u = primary.users_total || primary.users;
-                }
-
-                if (u) {
-                    updateTopUsers(formatUsersNumber(u));
-                    // 🔥 ОСЬ ТУТ ВИПРАВЛЕННЯ: Обнуляємо старі дані, бо маємо свіжі
-                    window.STARTAPP_USERS = null;
-                }
-            }
-
-            // Використовуємо старі дані тільки якщо нових немає
-            if (window.STARTAPP_USERS) updateTopUsers(window.STARTAPP_USERS);
-
+            return outputRows;
         } catch (e) {
-            console.error("Online fetch error:", e);
-            const cached = localStorage.getItem('cachedData');
-            if (cached) {
-                allData = JSON.parse(cached);
-                showOfflineBadge();
-                window.LAST_UPDATED = null;
-                for (const row of allData) {
-                    if (row.updated_at && row.updated_at.trim() !== "") {
-                        window.LAST_UPDATED = row.updated_at.trim();
-                        break;
-                    }
-                }
-                updateTopUpdated();
-                const sk = document.getElementById('skeletonLoader');
-                if (sk) sk.classList.add('hidden');
-                setupApp(isSilent);
-                if (window.STARTAPP_USERS) updateTopUsers(window.STARTAPP_USERS);
-            }
+            console.error("Помилка JSON:", e);
+            return [];
         }
     }
 
-    function setupApp(isSilent) {
-        const p = new URLSearchParams(window.location.search);
-        let q = p.get('q');
-        if (q) {
-            currentQueue = q;
-            localStorage.setItem("savedQueue", q);
+    // === 2. ДОПОМІЖНІ ФУНКЦІЇ ===
+
+    function timeToMinutes(t) {
+        const [h, m] = t.split(":").map(Number);
+        if (h === 24) return 24 * 60;
+        return h * 60 + m;
+    }
+
+    function minutesToTime(min) {
+        const h = Math.floor(min / 60);
+        const m = min % 60;
+        return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    }
+
+    function durationLabel(min) {
+        const h = Math.floor(min / 60);
+        const m = min % 60;
+        if (min < 0) return "--";
+        if (!h) return `${m} хв`;
+        if (!m) return `${h} год`;
+        return `${h} год ${m} хв`;
+    }
+
+    function parseTimesString(scheduleText, targetDayName) {
+        if (!scheduleText || typeof scheduleText !== "string") return [];
+        let dayTimesString = "";
+        const dayRegex = new RegExp(`${targetDayName}\\s*:\\s*([^\\n]+)`, 'i');
+        const match = scheduleText.match(dayRegex);
+
+        if (match && match[1]) dayTimesString = match[1].trim();
+        if (!dayTimesString || dayTimesString === '-') return [];
+
+        return dayTimesString
+            .replace(/\+/g, '')
+            .split(',')
+            .map(part => part.trim())
+            .filter(Boolean)
+            .map(part => {
+                const parts = part.split('-').map(s => s.trim());
+                if (parts.length !== 2) return null;
+                const [from, to] = parts;
+                if (!/^\d{2}:\d{2}$/.test(from) || !/^\d{2}:\d{2}$/.test(to)) return null;
+                return { off: from, on: to };
+            })
+            .filter(Boolean)
+            .sort((a, b) => timeToMinutes(a.off) - timeToMinutes(b.off));
+    }
+
+    function getTodayTomorrowNames() {
+        const now = new Date();
+        const todayIdx = now.getDay();
+        const tomorrowIdx = (todayIdx + 1) % 7;
+        return {
+            todayName: dayNamesUa[todayIdx],
+            tomorrowName: dayNamesUa[tomorrowIdx]
+        };
+    }
+
+    function filterRowsFor(queue, dayMode) {
+        const { todayName, tomorrowName } = getTodayTomorrowNames();
+        const targetDayName = (dayMode === "today") ? todayName : tomorrowName;
+        const row = allRows.find(r => String(r[COLUMN_GROUP_ID]).trim() === String(queue).trim());
+        
+        if (!row) return { intervals: [], dayName: targetDayName };
+
+        const scheduleText = row[COLUMN_SCHEDULE_TEXT] || "";
+        const normalized = scheduleText.replace(/\r/g, "");
+        return { intervals: parseTimesString(normalized, targetDayName), dayName: targetDayName };
+    }
+
+    // === 3. ПОБУДОВА ГРАФІКУ ===
+
+    function makeTimeline(queue, dayMode) {
+        // Очистка
+        if (countdownInterval) { cancelAnimationFrame(countdownInterval); }
+        timelineTrack.innerHTML = "";
+        slotsList.innerHTML = "";
+
+        const { intervals, dayName } = filterRowsFor(queue, dayMode);
+        
+        // Індикатор "зараз"
+        const now = new Date();
+        if (dayMode === "today") {
+            const minNow = now.getHours() * 60 + now.getMinutes();
+            nowIndicator.style.left = `${(minNow / 1440) * 100}%`;
+            nowIndicator.style.display = "block";
         } else {
-            const saved = localStorage.getItem("savedQueue");
-            if (saved) currentQueue = saved;
-        }
-        if (!isSilent) {
-            buildMenu();
-            const appContent = document.getElementById('app-content');
-            if (appContent) appContent.classList.remove('hidden');
-        }
-        render(currentTab);
-        updateNativeShareLink();
-    }
-
-    function showOfflineBadge() {
-        if (!document.getElementById('offBadge')) {
-            const b = document.createElement('div');
-            b.id = 'offBadge'; b.className = 'offline-badge';
-            b.innerText = 'Offline';
-            document.body.appendChild(b);
-        }
-    }
-    function removeOfflineBadge() { const b = document.getElementById('offBadge'); if (b) b.remove(); }
-    function formatUsersNumber(v) { v = String(v).replace(/\s+/g, ""); return v.replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
-
-    /* ====== ДОБАВЛЕНІ КРИТИЧНІ ФУНКЦІЇ, ЯКИХ НЕ ВИСТАЧАЛО ====== */
-
-        function loadTheme() {
-            let saved = localStorage.getItem('svitlo_theme');
-
-            // Якщо немає — завжди темна
-            if (!saved) {
-                saved = 'dark';
-            }
-
-            applyTheme(saved);
+            nowIndicator.style.display = "none";
         }
 
-        function applyTheme(theme) {
-            const root = document.documentElement;
-            root.setAttribute('data-theme', theme);
-
-            const icon = document.getElementById('fabThemeIcon');
-            if (icon) {
-                icon.textContent = theme === 'light' ? '☀️' : '🌙';
-            }
-
-            try {
-                if (tg && tg.setBackgroundColor) {
-                    tg.setBackgroundColor(theme === 'dark' ? '#12121a' : '#f2f2f7');
-                }
-            } catch (e) {}
-        }
-
-
-    function toggleTheme() {
-        const cur = document.documentElement.getAttribute('data-theme') || 'dark';
-        const next = cur === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('svitlo_theme', next);
-        applyTheme(next);
-        try {
-            if (tg && tg.setBackgroundColor) {
-                tg.setBackgroundColor(next === 'dark' ? '#12121a' : '#f2f2f7');
-            }
-        } catch (e) { }
-    }
-
-    function updateTopUpdated() {
-        const el = document.getElementById('topUpdated');
-        if (!el) return;
-        if (!window.LAST_UPDATED) {
-            el.innerText = 'Оновлено: —';
+        // Якщо світло весь день
+        if (!intervals.length) {
+            timelineTrack.innerHTML = `<div class="timeline-segment on" style="flex-grow:1">24 години світло</div>`;
+            slotsList.innerHTML = `
+                <div class="slot-row">
+                    <div><div class="slot-time">00:00 – 24:00</div></div>
+                    <div class="slot-tag on">⚡ Світло є</div>
+                </div>`;
+            updateCountdown([], dayMode);
             return;
         }
-        el.innerText = formatUpdateTime(window.LAST_UPDATED);
-    }
 
-    function updateTopUsers(val) {
-        const el = document.getElementById('topUsers');
-        if (!el) return;
-        el.innerText = formatUsersNumber(val);
-    }
+        let pointer = 0; // СТАРТУЄМО З 00:00
 
-    function addLabel(container, hour, label) {
-        if (!container) return;
-        const pct = (hour / 24) * 100;
+        intervals.forEach((intv) => {
+            const start = timeToMinutes(intv.off);
+            const end = timeToMinutes(intv.on);
 
-        const lbl = document.createElement('div');
-        lbl.className = 't-label';
-        lbl.style.left = pct + '%';
-        lbl.innerText = label;
-        container.appendChild(lbl);
+            // 🟢 КРОК 1: Чи є світло перед цим відключенням?
+            // Якщо відключення о 12:30, а pointer на 00:00, то duration = 750 хв світла
+            if (start > pointer) {
+                const duration = start - pointer;
+                const timeLabel = `${minutesToTime(pointer)} – ${intv.off}`;
+                
+                // Малюємо ЗЕЛЕНИЙ шматок (відступ)
+                const segOn = document.createElement("div");
+                segOn.className = "timeline-segment on";
+                segOn.style.flexGrow = duration; // ЦЕ РОБИТЬ ВІДСТУП
+                if (duration > 50) segOn.textContent = timeLabel;
+                timelineTrack.appendChild(segOn);
 
-        const tick = document.createElement('div');
-        tick.className = 't-tick';
-        tick.style.left = pct + '%';
-        container.appendChild(tick);
-    }
-
-    function formatHM(h) {
-        if (h < 0) h = 0;
-        let total = Math.round(h * 60);
-        let hh = Math.floor(total / 60) % 24;
-        let mm = total % 60;
-        return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
-    }
-
-    function fmtDur(hours) {
-        const totalMin = Math.round(hours * 60);
-        const hrs = Math.floor(totalMin / 60);
-        const mins = totalMin % 60;
-        let parts = [];
-        if (hrs > 0) parts.push(hrs + ' год');
-        if (mins > 0 || parts.length === 0) parts.push(mins + ' хв');
-        return parts.join(' ');
-    }
-
-    function startTimer(targetHour, totalSeconds, isOnNow) {
-        clearInterval(countdownInterval);
-        const timerEl = document.getElementById('batteryTimer');
-        if (!timerEl) return;
-
-        function formatSec(sec) {
-            const h = Math.floor(sec / 3600);
-            const m = Math.floor((sec % 3600) / 60);
-            const s = sec % 60;
-            if (h > 0) {
-                return (
-                    String(h).padStart(2, '0') + ':' +
-                    String(m).padStart(2, '0') + ':' +
-                    String(s).padStart(2, '0')
-                );
+                addSlotToList(timeLabel, durationLabel(duration), true);
             }
-            return (
-                String(m).padStart(2, '0') + ':' +
-                String(s).padStart(2, '0')
-            );
+
+            // 🔴 КРОК 2: Малюємо саме відключення
+            const durationOff = end - start;
+            const timeLabelOff = `${intv.off} – ${intv.on}`;
+
+            const segOff = document.createElement("div");
+            segOff.className = "timeline-segment off";
+            segOff.style.flexGrow = durationOff;
+            if (durationOff > 50) segOff.textContent = timeLabelOff;
+            timelineTrack.appendChild(segOff);
+
+            addSlotToList(timeLabelOff, durationLabel(durationOff), false);
+
+            pointer = end; // Пересуваємо вказівник на кінець відключення
+        });
+
+        // 🟢 КРОК 3: Хвіст світла до кінця доби
+        if (pointer < 1440) {
+            const duration = 1440 - pointer;
+            const timeLabel = `${minutesToTime(pointer)} – 00:00`;
+            
+            const segTail = document.createElement("div");
+            segTail.className = "timeline-segment on";
+            segTail.style.flexGrow = duration;
+            if (duration > 50) segTail.textContent = timeLabel;
+            timelineTrack.appendChild(segTail);
+
+            addSlotToList(timeLabel, durationLabel(duration), true);
         }
 
-        function moveCursor() {
-        // Шукаємо елемент за правильним ID
-        const cursorEl = document.getElementById('timeline-cursor');
-        if (!cursorEl) return;
-
-        const now = new Date();
-        const nowH = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
-        
-        // Рахуємо відсоток
-        const pct = (nowH / 24) * 100;
-        
-        // Рухаємо
-        cursorEl.style.left = `${pct}%`;
+        updateCountdown(intervals, dayMode);
     }
+
+    function addSlotToList(timeRange, duration, isLightOn) {
+        const row = document.createElement("div");
+        row.className = "slot-row";
+        const statusClass = isLightOn ? "on" : "off";
+        const text = isLightOn ? "Світло є" : "Відключення";
+        const icon = isLightOn ? "⚡" : "🌑";
+
+        row.innerHTML = `
+            <div>
+                <div class="slot-time">${timeRange}</div>
+                <div class="slot-duration" style="font-size:11px; opacity:0.7">${duration}</div>
+            </div>
+            <div class="slot-tag ${statusClass}">
+                ${icon} ${text}
+            </div>
+        `;
+        slotsList.appendChild(row);
+    }
+
+    // === 4. ТАЙМЕР ===
+
+    function updateCountdown(intervals, dayMode) {
+        if (countdownInterval) { cancelAnimationFrame(countdownInterval); }
+
+        // Якщо немає даних
+        if (dayMode !== "today" || !intervals || !intervals.length) {
+            cdH.textContent = "--"; cdM.textContent = "--"; cdS.textContent = "--";
+            // Скидаємо колір на звичайний
+            [cdH, cdM, cdS].forEach(el => el.style.color = 'var(--countdown-color)');
+            nextInfo.textContent = (dayMode !== "today") 
+                ? `Таймер тільки для режиму "Сьогодні".` 
+                : "Світлих зон за графіком на сьогодні більше немає.";
+            return;
+        }
 
         function tick() {
             const now = new Date();
-            const nowH = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+            const totalNowMin = now.getHours() * 60 + now.getMinutes();
+            const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 
-            let diffH = targetHour - nowH;
-            // якщо targetHour ≤ 24 і вже пройшов – значить подія завтра
-            if (targetHour <= 24 && diffH < 0) diffH += 24;
+            let targetTimeSec = null;
+            let message = "";
+            let isCurrentOutage = false;
 
-            const remaining = Math.max(0, Math.round(diffH * 3600));
-            const total = totalSeconds && totalSeconds > 0 ? totalSeconds : Math.max(remaining, 1);
-            const pct = total > 0 ? remaining / total : 0;
+            for (const intv of intervals) {
+                const start = timeToMinutes(intv.off);
+                const end = timeToMinutes(intv.on);
 
-            setBat(pct, isOnNow);
-            timerEl.innerText = formatSec(remaining);
-            moveCursor();
-
-            if (remaining <= 0) {
-                clearInterval(countdownInterval);
-                timerEl.innerText = isOnNow ? 'Світло має вимкнутись' : 'Світло має зʼявитись';
-                // трохи почекаємо і перезавантажимо графік тихо
-                setTimeout(() => init(true), 60000);
-            }
-        }
-
-        tick();
-        countdownInterval = setInterval(tick, 1000);
-    }
-
-    function openTelegramShare() {
-        const text = `Графік світла для черги ${currentQueue} у Броварах`;
-        const url = 'https://t.me/SvitloBroBot';
-        const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text);
-        try {
-            if (tg && tg.openTelegramLink) tg.openTelegramLink(shareUrl);
-            else window.open(shareUrl, '_blank');
-        } catch (e) {
-            window.open(shareUrl, '_blank');
-        }
-    }
-
-    function universalShare() {
-        const text = `Графік світла для черги ${currentQueue} у Броварах: https://t.me/SvitloBroBot`;
-        if (navigator.share) {
-            navigator.share({ text }).catch(() => {
-                openTelegramShare();
-            });
-        } else {
-            openTelegramShare();
-        }
-    }
-
-    function toggleFab() {
-        const cont = document.getElementById('fabContainer');
-        const ov = document.getElementById('fabOverlay');
-        if (!cont || !ov) return;
-        const isActive = cont.classList.toggle('active');
-        ov.classList.toggle('active', isActive);
-    }
-
-        function showInfo(type) {
-            const overlay = document.getElementById('infoModal');
-            const title = document.getElementById('infoTitle');
-            const text = document.getElementById('infoText');
-
-            if (type === 'about') {
-                title.innerText = "🤖 Про бота";
-                text.innerHTML = `
-                    Зручний бот для перегляду графіків відключень у м. Бровари.<br><br>
-                    <b>Розробник:</b> <a href="https://t.me/svitlopromo" target="_blank">@svitlopromo</a><br><br>
-                    Ми беремо офіційні дані та робимо їх зрозумілими.
-                `;
-            } else if (type === 'queue') {
-                title.innerText = "❓ Як дізнатися чергу";
-                text.innerHTML = `
-                    Ваша черга залежить від адреси проживання.<br><br>
-                    1. Зайдіть на сайт <a href="https://www.dtek-krem.com.ua/ua/shutdowns" target="_blank">ДТЕК</a>.<br>
-                    2. Введіть свою вулицю.<br>
-                    3. Подивіться номер групи.<br><br>
-                    Потім оберіть цю чергу у списку зверху.
-                `;
-
-             } else if (type === 'faq') {
-                title.innerText = "💬 Питання-відповіді";
-                text.innerHTML = `
-                    <b>1. Чому графік у боті не співпадає з реальністю?</b><br>
-                    Через аварії або екстрені відключення. Графік відображає лише стабілізаційні відключення.<br><br>
-
-                    <b>2. Звідки ви берете графіки?</b><br>
-                    З офіційного сайту ДТЕК. Дані обробляються автоматично.<br><br>
-
-                    <b>3. Моя адреса без світла, а по графіку має бути світло!</b><br>
-                    Це локальна аварія або екстрене відключення — вони не входять у графік.<br><br>
-
-                    <b>4. Чому оновлення графіків приходить не одразу?</b><br>
-                    ДТЕК не завжди оновлює дані вчасно. Ми перевіряємо їх регулярно.<br><br>
-                `;
-
-            } else if (type === 'emergency') {
-                title.innerText = "🚨 Аварійні служби Броварів";
-                text.innerHTML = `
-                    ⚡ <b>ДТЕК Київські регіональні електромережі</b><br>
-                    Безкоштовно: <a href="tel:0800400740">0 800 400 740</a><br><br>
-
-                    🏛 <b>Контакт-центр Броварської міської ради</b><br>
-                    <a href="tel:+380459461111">+38 045 946 1111</a><br><br>
-
-                    💧 <b>Броваритепловодоенергія</b><br>
-                    <a href="tel:+380459441101">+38 045 944 1101</a><br><br>
-
-                    🔥 <b>ДСНС (Пожежна служба):</b> <a href="tel:101">101</a><br>
-                    🚑 <b>Швидка допомога:</b> <a href="tel:103">103</a><br>
-                    👮 <b>Поліція:</b> <a href="tel:102">102</a><br><br>
-
-                    ❗ У разі небезпеки телефонуйте 101 або 103.
-                `;
-
-            } else if (type === 'support') {
-                title.innerText = "💚 Підтримати";
-                text.innerHTML = `
-                    Дякуємо, що підтримуєте наш проєкт!<br><br>
-                    Ваші донати допомагають нам:<br>
-                    • підтримувати роботу бота 🖥️<br>
-                    • оновлювати графіки ⚡️<br>
-                    • створювати нові функції 🔧<br><br>
-                    🔗 <a href="https://send.monobank.ua/jar/6qoHuhpGgD" target="_blank">Monobank (Банка)</a><br><br>
-                    💳 Або карткою:<br><b>4874 1000 2226 7571</b>
-                `;
-            } else if (type === 'collab') {
-                title.innerText = "🤝 Співпраця";
-                text.innerHTML = `
-                    З питань співпраці та реклами звертайтесь до розробника:<br><br>
-                    👉 <a href="https://t.me/svitlopromo" target="_blank">@svitlopromo</a>
-                `;
-            }
-
-            overlay.classList.add('show');
-            const fab = document.getElementById('fabContainer');
-            const fabOverlay = document.getElementById('fabOverlay');
-            if(fab) fab.classList.remove('active');
-            if(fabOverlay) fabOverlay.classList.remove('active');
-        }
-
-        async function fetchDonation() {
-            try {
-                const url = `${CSV_PROXY_URL}?jar=true&t=${Date.now()}`;
-                const r = await fetch(url);
-                const data = await r.json();
-
-                if (data.amount !== undefined) {
-                    updateDonateUI(data.amount, data.goal);
+                if (totalNowMin >= start && totalNowMin < end) {
+                    isCurrentOutage = true;
+                    targetTimeSec = end * 60;
+                    message = `Зараз діє відключення. Світло орієнтовно з'явиться о ${intv.on}`;
+                    break;
                 }
-            } catch (e) {
-                console.error("Donation error:", e);
-                document.getElementById('donateAmount').innerText = "Монобанка";
-            }
-        }
-
-    function scrollToActiveQueue() {
-        const list = document.getElementById('queueList');
-        if (!list) return;
-        const active = list.querySelector('.q-item.active');
-        if (!active) return;
-        const offset = active.offsetTop - list.clientHeight / 2;
-        list.scrollTo({ top: offset, behavior: 'smooth' });
-    }
-
-    /* ====== ДАЛІ ЙДЕ ТВОЯ ІСНУЮЧА ЛОГІКА ПАРСИНГУ / РЕНДЕРУ ====== */
-
-    function parseCSV(text) {
-        const rows = []; let currentRow = []; let currentVal = ''; let insideQuotes = false;
-        for (let i = 0; i < text.length; i++) {
-            const char = text[i]; const nextChar = text[i + 1];
-            if (char === '"') {
-                if (insideQuotes && nextChar === '"') { i++; currentVal += '"'; }
-                else { insideQuotes = !insideQuotes; }
-            }
-            else if (char === ',' && !insideQuotes) {
-                currentRow.push(currentVal); currentVal = '';
-            }
-            else if ((char === '\r' || char === '\n') && !insideQuotes) {
-                if (char === '\r' && nextChar === '\n') i++;
-                if (currentVal || currentRow.length) currentRow.push(currentVal);
-                if (currentRow.length) rows.push(currentRow);
-                currentRow = []; currentVal = '';
-            } else { currentVal += char; }
-        }
-        if (currentVal || currentRow.length) currentRow.push(currentVal);
-        if (currentRow.length) rows.push(currentRow);
-        if (rows.length < 2) return [];
-        const rawHeaders = rows[0].map(h => h.replace(/\uFEFF/g, '').replace(/\u00A0/g, ' ').replace(/[\u200B-\u200F]/g, '').trim().toLowerCase());
-        return rows.slice(1).map(row => {
-            const obj = {};
-            rawHeaders.forEach((h, i) => {
-                let val = row[i] ?? "";
-                if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
-                obj[h] = val.trim();
-            });
-            return obj;
-        });
-    }
-
-    function normalizeHeaders(obj) {
-        const fixed = {};
-        for (let key in obj) {
-            const clean = key.replace(/\uFEFF/g, "").replace(/\u00A0/g, " ").replace(/[\u200B-\u200F]/g, "").trim().toLowerCase();
-            fixed[clean] = obj[key];
-        }
-        return fixed;
-    }
-
-    function getSchedule(fullText, targetDate) {
-        if (!fullText) return null;
-        const daysMap = ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "Пʼятниця", "Субота"];
-        const dayName = daysMap[targetDate.getDay()];
-        const lines = fullText.replace(/\r\n/g, '\n').split('\n');
-        let dayLine = lines.find(line => line.trim().startsWith(dayName));
-        if (!dayLine || dayLine.includes(":-") || dayLine.includes(": -") || dayLine.trim().endsWith("-")) return null;
-        let timesPart = dayLine.includes(':') ? dayLine.substring(dayLine.indexOf(':') + 1).trim() : "";
-        if (!timesPart || timesPart === "-") return null;
-        timesPart = timesPart.replace(/\+/g, "");
-        const ranges = timesPart.split(',');
-        let arr = [];
-        let lastTime = 0;
-        ranges.forEach(r => {
-            const parts = r.split('-').map(s => s.trim());
-            if (parts.length < 2) return;
-            const startH = timeToH(parts[0]);
-            const endH = timeToH(parts[1]);
-            if (isNaN(startH) || isNaN(endH)) return;
-            if (startH > lastTime) {
-                arr.push(`${parseFloat((startH - lastTime).toFixed(2))}on`);
-            }
-            let dur;
-            if (endH < startH) {
-                dur = (24 - startH) + endH;
-            } else {
-                dur = endH - startH;
-            }
-            if (dur > 0) {
-                arr.push(`${parseFloat(dur.toFixed(2))}off`);
-            }
-            lastTime = startH + dur;
-        });
-        if (lastTime < 24) {
-            arr.push(`${parseFloat((24 - lastTime).toFixed(2))}on`);
-        }
-        if (arr.length === 0) return "24on";
-        return arr.join(',');
-    }
-
-    function timeToH(t) { const [h, m] = t.split(':').map(Number); return h + (m / 60); }
-
-    function toggleModal() {
-        const modal = document.getElementById('modal');
-        modal.classList.toggle('show');
-        document.querySelector('.queue-select-btn').classList.toggle('open');
-        setTimeout(() => {
-            const active = document.querySelector(".q-item.active");
-            if (active) scrollToActiveQueue();
-        }, 200);
-    }
-
-    function selectQueue(q) {
-        currentQueue = q; localStorage.setItem('savedQueue', q);
-        try { tg.HapticFeedback.selectionChanged(); } catch (e) { }
-        toggleModal(); buildMenu(); render(currentTab);
-    }
-
-    function buildMenu() {
-        const list = document.getElementById('queueList');
-        list.innerHTML = '<div style="text-align:center;margin-bottom:15px;color:var(--text-muted);font-size:12px">ОБЕРІТЬ ЧЕРГУ</div>';
-        const queues = [...new Set(allData.map(i => i.group_id))].sort();
-        queues.forEach(q => {
-            if (!q) return;
-            let d = document.createElement('div');
-            d.className = `q-item ${q == currentQueue ? 'active' : ''}`;
-            d.innerText = `Черга ${q}`;
-            d.onclick = () => selectQueue(q);
-            list.appendChild(d);
-        });
-        document.getElementById('queueTitle').innerText = `ЧЕРГА ${currentQueue}`;
-    }
-
-        function formatUpdateTime(raw) {
-        if (!raw) return "";
-        const months = ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"];
-
-        // Розбиваємо рядок "25.11.2025 22:25:34" на дату і час
-        const [datePart, timePart] = raw.split(" ");
-
-        // 🔥 ВИПРАВЛЕННЯ ТУТ:
-        // Було: const [Y, M, D] = datePart.split("-").map(Number);
-        // Стало (для формату 25.11.2025):
-        const [D, M, Y] = datePart.split(".").map(Number);
-
-        const [h, m] = timePart.split(":").map(Number);
-
-        const dt = new Date(Y, M - 1, D, h, m);
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-        const dayOnly = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
-
-        if (dayOnly.getTime() === today.getTime()) return `Оновлено: сьогодні о ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-        if (dayOnly.getTime() === yesterday.getTime()) return `Оновлено: вчора о ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-
-        return `Оновлено: ${D} ${months[M - 1]} о ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-    }
-
-    function switchTab(idx) {
-        if (currentTab === idx) return;
-        try { tg.HapticFeedback.impactOccurred('light'); } catch (e) { }
-        const body = document.getElementById("dayBody");
-        const dateBox = document.querySelector(".date-box");
-        dateBox.classList.add("anim-hide");
-        const direction = idx > currentTab ? 1 : -1;
-        body.style.transition = "transform .25s ease, opacity .25s ease";
-        body.style.transform = `translateX(${-40 * direction}px)`;
-        body.style.opacity = "0";
-        setTimeout(() => {
-            currentTab = idx;
-            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-            document.getElementById("tab" + idx).classList.add("active");
-            body.style.transition = "none";
-            body.style.transform = `translateX(${40 * direction}px)`;
-            body.style.opacity = "0";
-            render(idx);
-            setTimeout(() => {
-                body.style.transition = "transform .25s ease, opacity .25s ease";
-                body.style.transform = "translateX(0)";
-                body.style.opacity = "1";
-                setTimeout(() => {
-                    dateBox.classList.remove("anim-hide");
-                    dateBox.classList.add("anim-show");
-                    setTimeout(() => dateBox.classList.remove("anim-show"), 250);
-                }, 40);
-            }, 20);
-        }, 250);
-    }
-
-function render(dayIdx) {
-        const row = allData.find(r => r.group_id == currentQueue);
-        if (!row) return;
-
-        const targetDate = new Date();
-        if (dayIdx === 2) targetDate.setDate(targetDate.getDate() + 1);
-
-        const scheduleStr = getSchedule(row.schedule_text, targetDate);
-
-        const d = String(targetDate.getDate()).padStart(2, '0');
-        const m = String(targetDate.getMonth() + 1).padStart(2, '0');
-        const daysMap = ["НЕДІЛЯ", "ПОНЕДІЛОК", "ВІВТОРОК", "СЕРЕДА", "ЧЕТВЕР", "ПʼЯТНИЦЯ", "СУБОТА"];
-        document.getElementById('dateDisplay').innerText = `${daysMap[targetDate.getDay()]} ${d}.${m}`;
-
-        const track = document.getElementById('timelineTrack');
-        const iBox = document.getElementById('infoBox');
-        const lBox = document.getElementById('timeLabelsBox');
-        const tlSec = document.getElementById('timelineSection');
-        const totBox = document.getElementById('totalBox');
-        const noData = document.getElementById('noDataMessage');
-        const batSec = document.getElementById('batterySection');
-        const detailBox = document.getElementById('detailCardContainer');
-        const appContent = document.getElementById('app-content');
-
-        // Очищення
-        track.innerHTML = '';
-        while (lBox.firstChild) lBox.removeChild(lBox.firstChild);
-        iBox.innerHTML = '';
-        detailBox.innerHTML = '';
-        detailBox.classList.add('hidden');
-        activeSegmentElement = null; activeListCard = null;
-
-        // Курсор
-        ensureCursor();
-        const tr = document.getElementById('timelineTrack') || document.querySelector('.timeline-track');
-        if (tr) tr.appendChild(cursor);
-        track.appendChild(cursor);
-        cursor.style.display = (dayIdx === 1 ? 'block' : 'none');
-
-        const isToday = (dayIdx === 1);
-        document.getElementById("dayTitle").innerText = isToday ? "Графік на сьогодні" : "Графік на завтра";
-
-        const bf = document.getElementById('batteryFill');
-        bf.className = 'battery-fill';
-
-        if (!scheduleStr) {
-            tlSec.classList.add('hidden'); noData.classList.remove('hidden'); totBox.innerHTML = ''; batSec.classList.remove('hidden');
-            document.getElementById('batteryTimer').innerText = "—";
-            document.getElementById('batteryLabel').innerText = "Невідомо";
-            bf.style.width = "100%"; bf.style.background = "#555"; bf.style.boxShadow = "none";
-            if (appContent) appContent.classList.remove('hidden');
-            return;
-        }
-
-        tlSec.classList.remove('hidden'); noData.classList.add('hidden');
-
-        if (!isToday) {
-            const t = document.getElementById('batteryTimer').innerText;
-            const l = document.getElementById('batteryLabel').innerText;
-            document.getElementById('batteryTimer').innerText = t;
-            document.getElementById('batteryLabel').innerText = l;
-        }
-
-        // --- Аналіз завтра ---
-        let tomorrowFirstOff = null;
-        if (isToday) {
-            const tmr = new Date(targetDate); tmr.setDate(tmr.getDate() + 1);
-            const tmrStr = getSchedule(row.schedule_text, tmr);
-            if (tmrStr) {
-                const tParts = tmrStr.split(',');
-                let firstPart = tParts[0];
-                let pType = firstPart.includes('off') ? 'off' : 'on';
-                let pDur = parseFloat(firstPart.replace('on', '').replace('off', ''));
-                if (pType === 'on') tomorrowFirstOff = pDur; 
-            }
-        }
-
-        // --- Аналіз вчора ---
-        let yesterdayExtraOn = 0;
-        let yesterdayExtraOff = 0;
-        try {
-            const yst = new Date(targetDate);
-            yst.setDate(yst.getDate() - 1);
-            const ystStr = getSchedule(row.schedule_text, yst);
-            if (ystStr) {
-                const yParts = ystStr.split(',');
-                if (yParts.length > 0) {
-                    const lastPart = yParts[yParts.length - 1];
-                    const dur = parseFloat(lastPart.replace('on', '').replace('off', ''));
-                    if (!isNaN(dur)) {
-                        if (lastPart.includes('on')) yesterdayExtraOn = dur;
-                        else yesterdayExtraOff = dur;
-                    }
-                }
-            }
-        } catch (e) { console.warn("Err yesterday", e); }
-
-        let curH = 0; let totOff = 0;
-        const now = new Date();
-        const curFloat = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
-        let foundState = false;
-        let lastEndH = 0;
-        let lastOffEndH = 0;
-
-        addLabel(lBox, 0, "00:00", "start");
-
-        const parts = scheduleStr.split(',');
-        
-        /* --- ГОЛОВНИЙ ЦИКЛ --- */
-        parts.forEach((part, index) => {
-            let type = part.includes('off') ? 'off' : 'on';
-            let dur = parseFloat(part.replace('on', '').replace('off', ''));
-            if (isNaN(dur) || dur <= 0) return;
-            
-            let segStart = curH;
-            let endH = curH + dur;
-            let mathEndH = endH; 
-            let displayEndH = endH;
-            let fullDuration = dur;
-            let connectsToTomorrow = false;
-
-            if (type === 'off') lastOffEndH = endH;
-
-            // Логіка склеювання днів
-            if (Math.abs(endH - 24) < 0.1) {
-                if (type === 'on' && tomorrowFirstOff !== null && tomorrowFirstOff > 0) {
-                    connectsToTomorrow = true;
-                    mathEndH = 24 + tomorrowFirstOff;
-                    fullDuration += tomorrowFirstOff;
-                    displayEndH = mathEndH; 
-                }
-            }
-
-            // Корекція першого блоку (вчора)
-            let realStartH = segStart;
-            if (index === 0) {
-                if (type === 'on' && yesterdayExtraOn > 0) {
-                    realStartH = 24 - yesterdayExtraOn;
-                    fullDuration += yesterdayExtraOn; 
-                }
-                if (type === 'off' && yesterdayExtraOff > 0) {
-                    let partYesterday = yesterdayExtraOff - dur;
-                    realStartH = 24 - (yesterdayExtraOff > dur ? dur : yesterdayExtraOff);
-                    if (type === 'off') fullDuration = yesterdayExtraOff; 
-                }
-            }
-
-            const isActiveNow = (isToday && curFloat >= segStart && curFloat < endH);
-
-            // --- ТАЙМЛАЙН ---
-            let seg = document.createElement('div');
-            seg.className = `segment ${type}`;
-            if (isActiveNow) seg.classList.add('active-segment');
-            seg.style.flexGrow = dur; 
-            seg.style.flexBasis = '0';
-            track.appendChild(seg);
-            
-            if (endH < 23.9 && (endH - lastEndH) > 2.0 && (24 - endH) > 1.5) {
-                addLabel(lBox, endH, formatHM(endH), "mid"); lastEndH = endH;
-            }
-
-            seg.addEventListener('click', () => handleSegmentClick(seg, type, realStartH, displayEndH, fullDuration));
-
-
-            // --- 🔥 ГОТУЄМО ВМІСТ КАРТКИ ---
-            
-            let headerTimerHtml = "";
-            if (isActiveNow) {
-                const remaining = mathEndH - curFloat;
-                const remText = fmtDur(remaining);
-                headerTimerHtml = `<span class="mini-timer">⏳ ${remText}</span>`;
-            }
-
-            // 2. Детальний текст (Body)
-            let detailsHtml = "";
-            
-            let timeRangeMessage = "";
-            if (type === 'on') {
-                if (index === 0 && yesterdayExtraOn > 0) {
-                    timeRangeMessage = `Світло увімкнули ще <b>вчора о ${formatHM(realStartH)}</b>. (ще до півночі).`;
-                } else {
-                    timeRangeMessage = `Світло буде з <b>${formatHM(realStartH)}</b> до <b>${formatHM(displayEndH)}</b>.`;
-                }
-            } else {
-                timeRangeMessage = `Світло буде вимкнене о <b>${formatHM(realStartH)}</b> і повернеться о <b>${formatHM(displayEndH)}</b>.`;
-            }
-            detailsHtml += `<p>${timeRangeMessage}</p>`;
-            
-            const durTxt = fmtDur(fullDuration);
-            let totalDurationMsg = type === 'on' 
-                ? `Загальна тривалість: <b>${durTxt}</b>.` 
-                : `Тривалість відключення: <b>${durTxt}</b>.`;
-
-            if (!(index === 0 && yesterdayExtraOn > 0 && type === 'on')) {
-                 detailsHtml += `<p>${totalDurationMsg}</p>`;
-            }
-
-
-            // 3. Наступна дія / Статус
-            if (type === 'on') {
-                if (connectsToTomorrow) {
-                    detailsHtml += `<p>Наступне вимкнення очікується <b>завтра о ${formatHM(tomorrowFirstOff)}</b>.</p>`;
-                } else if (Math.abs(endH - 24) < 0.1) {
-                    detailsHtml += `<p>Наступне вимкнення очікується <b>рівно о півночі</b>.</p>`;
-                } else {
-                    detailsHtml += `<p>Наступне вимкнення очікується о <b>${formatHM(displayEndH)}</b>.</p>`;
-                }
-            } else {
-                 detailsHtml += `<p>Планове відключення.</p>`; 
-            }
-            
-
-            detailsHtml += `<p class="detail-note" style="margin-top:8px; opacity:0.5"><i>* Можлива невелика похибка у часі.</i></p>`;
-
-
-            // --- СТВОРЕННЯ КАРТКИ ВРУЧНУ ---
-            let card = document.createElement('div');
-            card.className = `card c-${type}`;
-            
-            let statusLabel = type === 'on' ? 'СВІТЛО Є' : 'ВІДКЛЮЧЕННЯ';
-            
-            card.innerHTML = `
-                <div class="card-header">
-                    <div class="card-info">
-                        <div class="c-icon">${type === 'on' ? '💡' : '🔌'}</div>
-                        <div class="c-times">
-                            <div class="status-label">
-                                ${statusLabel}${headerTimerHtml}
-                            </div>
-                            <div class="c-time">${formatHM(realStartH)} - ${formatHM(displayEndH)}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="c-dur">${fmtDur(fullDuration)}</div>
-                </div>
                 
-                <div class="card-details">${detailsHtml}</div>
-                <div class="card-progress-track">
-                    <div class="card-progress-fill" style="width: 0%"></div>
-                </div>
-            `;
-
-            // Логіка розкриття
-            card.addEventListener("click", (ev) => {
-                ev.stopPropagation();
-                if (activeListCard === card) {
-                    card.classList.remove("expanded");
-                    activeListCard = null;
-                    return;
-                }
-                if (activeListCard) { activeListCard.classList.remove("expanded"); }
-                card.classList.add("expanded");
-                activeListCard = card;
-            });
-
-
-            // --- 🔥 АКТИВНИЙ СТАН: ФІКС ПРОГРЕС-БАРУ ---
-            if (isActiveNow) {
-                card.classList.add('active-now');
-                
-                // 🔥 NEW LOGIC: Use full duration and calculate elapsed time since true start
-                const totalLen = fullDuration; 
-                const remaining = mathEndH - curFloat; 
-                const passed = totalLen - remaining; 
-
-                let percent = (passed / totalLen) * 100;
-                percent = Math.max(0, Math.min(100, percent));
-
-                const bar = card.querySelector('.card-progress-fill');
-                if (bar) bar.style.width = `${percent}%`;
-                
-                // Батарейка
-                if (!foundState) {
-                    foundState = true;
-                    // 🔥 Виклик таймера з повним діапазоном
-                    startTimer(mathEndH, Math.floor(fullDuration * 3600), type === 'on');
+                if (start > totalNowMin) {
+                    targetTimeSec = start * 60;
+                    message = `Світло є. Наступне відключення о ${intv.off}`;
+                    break;
                 }
             }
 
-            iBox.appendChild(card);
-            if (type === 'off') totOff += dur;
-            curH = endH;
-        });
-
-        addLabel(lBox, 24, "24:00", "end");
-
-        if (isToday && !foundState) {
-            if (totOff === 0) {
-                 if (tomorrowFirstOff !== null && tomorrowFirstOff > 0) {
-                    const targetH = 24 + tomorrowFirstOff;
-                    const totalSec = Math.floor(((targetH - 0) + yesterdayExtraOn) * 3600);
-                    startTimer(targetH, totalSec, true);
-                 } else { setGreenBattery(); }
-            } else if (tomorrowFirstOff !== null && tomorrowFirstOff > 0) {
-                const targetH = 24 + tomorrowFirstOff;
-                const totalSec = Math.floor((targetH - lastOffEndH) * 3600);
-                startTimer(targetH, totalSec, true);
-            } else { setGreenBattery(); }
-        }
-
-        totBox.innerHTML = `Всього без світла: <b>${fmtDur(totOff)}</b>`;
-
-        const shareWrap = document.getElementById("shareWrapper");
-        shareWrap.classList.remove("hidden");
-        if (!shareWrap.classList.contains("fade-in")) setTimeout(() => shareWrap.classList.add("fade-in"), 150);
-        if (appContent) appContent.classList.remove('hidden');
-    }
-
-    function handleSegmentClick(segEl, type, startH, endH, durH) {
-        const detailBox = document.getElementById('detailCardContainer');
-        const cursorEl = document.getElementById('timeline-cursor');
-
-        // Отримуємо поточний час для перевірки, чи курсор над цим сегментом
-        const now = new Date();
-        const curFloat = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
-        // Перевіряємо, чи це сьогодні і чи час входить в межі сегмента
-        // (currentTab === 1 перевіряє, що ми на вкладці "Сьогодні")
-        const isCursorOnThisSegment = (currentTab === 1) && (curFloat >= startH && curFloat < endH);
-
-        // --- ЛОГІКА ЗАКРИТТЯ (Якщо клікнули на вже активний) ---
-        if (activeSegmentElement === segEl) {
-            segEl.classList.remove('segment-selected');
-            
-            // 🔥 ОПУСКАЄМО КУРСОР НАЗАД
-            if (cursorEl) cursorEl.classList.remove('cursor-elevated');
-
-            const card = detailBox.querySelector('.detail-card');
-
-            if (card) {
-                const box = detailBox;
-                const startHeight = box.scrollHeight;
-
-                box.style.height = startHeight + "px";
-                void box.offsetHeight;
-                box.style.transition = "height 0.28s ease";
-                box.style.height = "0px";
-
-                card.classList.add("closing");
-
-                box.addEventListener("transitionend", () => {
-                    box.style.transition = "";
-                    box.style.height = "";
-                    box.classList.add("hidden");
-                    box.innerHTML = "";
-                    activeSegmentElement = null;
-                }, { once: true });
-
-            } else {
-                detailBox.classList.add("hidden");
-                detailBox.innerHTML = "";
-                activeSegmentElement = null;
-            }
-            return;
-        }
-
-        // --- ЛОГІКА ВІДКРИТТЯ (Новий сегмент) ---
-        
-        // Знімаємо виділення з попереднього
-        if (activeSegmentElement) {
-            activeSegmentElement.classList.remove('segment-selected');
-        }
-
-        // Виділяємо новий
-        activeSegmentElement = segEl;
-        segEl.classList.add('segment-selected');
-
-        // 🔥 ЛОГІКА ДЛЯ КУРСОРА:
-        // Спочатку скидаємо (на випадок переходу з іншого сегмента)
-        if (cursorEl) cursorEl.classList.remove('cursor-elevated');
-        
-        // Якщо курсор фізично знаходиться в часі цього сегмента — піднімаємо його
-        if (isCursorOnThisSegment && cursorEl) {
-            cursorEl.classList.add('cursor-elevated');
-        }
-
-        showDetailCard(type, startH, endH, durH);
-
-        const box = detailBox;
-        box.classList.remove("hidden");
-
-        box.style.height = "auto";
-        const targetHeight = box.scrollHeight;
-
-        box.style.height = "0px";
-        void box.offsetHeight;
-
-        box.style.transition = "height 0.28s ease";
-        box.style.height = targetHeight + "px";
-
-        box.addEventListener("transitionend", () => {
-            box.style.transition = "";
-            box.style.height = "auto";
-        }, { once: true });
-
-        try { tg.HapticFeedback.selectionChanged(); } catch (e) {}
-    }
-
-
-    function showDetailCard(type, startH, endH, durH) {
-        const box = document.getElementById('detailCardContainer');
-        if (!box) return;
-        const startStr = formatHM(startH);
-        const endStr = formatHM(endH);
-        const durStr = fmtDur(durH);
-        let titleStatus, icon, headerClass, bodyHtml;
-        
-        // Перевірка, чи інтервал почався вчора (наприклад 23:00 - 01:00)
-        const isOvernight = startH > endH; 
-
-        if (type === 'on') {
-            titleStatus = 'СВІТЛО Є'; icon = '💡'; headerClass = 'detail-status-on';
-            
-            // 🔥 ВИПРАВЛЕННЯ: Перевіряємо, чи кінець виходить за межі 24 годин
-            let nextOffText = `Наступне вимкнення очікується о <b>${endStr}</b>.`;
-            if (endH >= 24) {
-                 nextOffText = `Наступне вимкнення очікується <b>завтра о ${endStr}</b>.`;
-            }
-
-            if (isOvernight) {
-                 bodyHtml = `<p>Світло увімкнули вчора о <b>${startStr}</b>, вимкнення очікується о <b>${endStr}</b>.</p>`;
-            } else {
-                 bodyHtml = `<p>Світло буде з <b>${startStr}</b> до <b>${endStr}</b>.</p><p>${nextOffText}</p>`;
-            }
-
-        } else {
-            titleStatus = 'ВІДКЛЮЧЕННЯ'; icon = '🔌'; headerClass = 'detail-status-off';
-            
-            if (isOvernight) {
-                bodyHtml = `<p>Вимкнення триває з вчора <b>(${startStr})</b> і завершиться о <b>${endStr}</b>.</p><p>Планове відключення.</p>`;
-            } else {
-                // Якщо кінець > 24, пишемо "повернеться завтра"
-                if (endH >= 24) {
-                    bodyHtml = `<p>Світло буде вимкнене о <b>${startStr}</b> і повернеться <b>завтра о ${endStr}</b>.</p><p>Планове відключення.</p>`;
-                } else {
-                    bodyHtml = `<p>Світло буде вимкнене о <b>${startStr}</b> і повернеться о <b>${endStr}</b>.</p><p>Планове відключення.</p>`;
-                }
-            }
-        }
-        
-        box.classList.remove('hidden');
-        box.innerHTML = `
-            <div class="detail-card ${type === 'on' ? 'on' : 'off'}">
-                <div class="detail-header">
-                    <div class="detail-left">
-                        <div class="detail-icon">${icon}</div>
-                        <div class="detail-main">
-                            <div class="detail-status ${headerClass}">${titleStatus}</div>
-                            <div class="detail-time">${startStr} - ${endStr}</div>
-                        </div>
-                    </div>
-                    <div class="detail-duration">${durStr}</div>
-                </div>
-                <div class="detail-divider"></div>
-                <div class="detail-body">
-                    ${bodyHtml}
-                    <p class="detail-note">* Включення/вимкнення може відбуватися з невеликою похибкою у часі.</p>
-                </div>
-            </div>`;
-    }
-
-    function createCard(s, e, d, type, nextOffInfo = null, customMainText = null) {
-        let c = document.createElement('div');
-        c.className = `card c-${type}`;
-        let detailsHtml = '';
-
-        if (type === 'on') {
-            let nextStr = `Наступне вимкнення очікується о <b>${formatHM(e)}</b>.`;
-            if (nextOffInfo) nextStr = nextOffInfo;
-
-            // 🔥 ВИПРАВЛЕННЯ: Якщо є спец. текст (про вчора), беремо його. Якщо ні — стандартний.
-            let mainMessage = customMainText 
-                ? customMainText 
-                : `Світло буде з <b>${formatHM(s)}</b> до <b>${formatHM(e)}</b>.`;
-
-            detailsHtml = `${mainMessage}<br>${nextStr}<br><br><i>* Включення/вимкнення може бути з невеликою похибкою.</i>`;
-        
-        } else {
-            let mainStr = `Світло буде вимкнене о <b>${formatHM(s)}</b> і повернеться о <b>${formatHM(e)}</b>.`;
-            if (customMainText) mainStr = customMainText;
-            
-            detailsHtml = `${mainStr}<br>Планове відключення.<br><br><i>* Включення/вимкнення може відбуватися з невеликою похибкою у часі.</i>`;
-        }
-
-        c.innerHTML = `
-            <div class="card-header">
-                <div class="card-info">
-                    <div class="c-icon">${type === 'on' ? '💡' : '🔌'}</div>
-                    <div class="c-times">
-                        <div class="status-label">${type === 'on' ? 'СВІТЛО Є' : 'ВІДКЛЮЧЕННЯ'}</div>
-                        <div class="c-time">${formatHM(s)} - ${formatHM(e)}</div>
-                    </div>
-                </div>
-                <div class="c-dur">${fmtDur(d)}</div>
-            </div>
-            <div class="card-details">${detailsHtml}</div>
-            
-            <div class="card-progress-track">
-                <div class="card-progress-fill" style="width: 0%"></div>
-            </div>
-        `;
-            
-        c.addEventListener("click", (ev) => {
-            ev.stopPropagation();
-            if (activeListCard === c) {
-                c.classList.remove("expanded");
-                activeListCard = null;
+            if (targetTimeSec === null) {
+                cdH.textContent = "00"; cdM.textContent = "00"; cdS.textContent = "00";
+                [cdH, cdM, cdS].forEach(el => el.style.color = 'var(--countdown-color)');
+                nextInfo.textContent = "На сьогодні планові відключення завершилися.";
                 return;
             }
-            if (activeListCard) { activeListCard.classList.remove("expanded"); }
-            c.classList.add("expanded");
-            activeListCard = c;
+
+            let diff = targetTimeSec - nowSec;
+
+            if (diff <= 0) {
+                 makeTimeline(currentQueue, currentDayMode);
+                 return;
+            }
+
+            const hours = Math.floor(diff / 3600);
+            diff %= 3600;
+            const minutes = Math.floor(diff / 60);
+            const seconds = diff % 60;
+
+            cdH.textContent = String(hours).padStart(2, "0");
+            cdM.textContent = String(minutes).padStart(2, "0");
+            cdS.textContent = String(seconds).padStart(2, "0");
+            
+            // 🔥 ФАРБУЄМО ТАЙМЕР ТА ТЕКСТ
+            if (isCurrentOutage) {
+                // Якщо відключення - ЧЕРВОНИЙ
+                [cdH, cdM, cdS].forEach(el => el.style.color = '#ef4444');
+                nextInfo.innerHTML = `<span style="color: #ef4444; font-weight:bold;">⚠️ ${message}</span>`;
+            } else {
+                // Якщо світло є - звичайний
+                [cdH, cdM, cdS].forEach(el => el.style.color = 'var(--countdown-color)');
+                nextInfo.textContent = message;
+            }
+            
+            countdownInterval = requestAnimationFrame(tick);
+        }
+        tick();
+    }
+    
+    // === 5. ТЕМА ТА ПОДІЇ ===
+    
+    function setDarkMode(isDark) {
+        if (isDark) {
+            body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️'; 
+            localStorage.setItem('theme', 'dark');
+        } else {
+            body.classList.remove('dark-mode');
+            themeToggle.textContent = '🌙'; 
+            localStorage.setItem('theme', 'light');
+        }
+    }
+    
+    function toggleDarkMode() {
+        setDarkMode(!body.classList.contains('dark-mode'));
+    }
+
+    function updateQueueSelector(rows) {
+        const selector = document.getElementById('queueSelect');
+        selector.innerHTML = ''; 
+        
+        const uniqueQueues = new Set();
+        // Стандартний список для красивого сортування
+        const standardQueuesOrder = [
+            "1.1", "1.2", "2.1", "2.2", "3.1", "3.2", 
+            "4.1", "4.2", "5.1", "5.2", "6.1", "6.2"
+        ];
+        
+        const queueDescriptions = {
+            "1.1": "1 черга (1 підгрупа)", "1.2": "1 черга (2 підгрупа)",
+            "2.1": "2 черга (1 підгрупа)", "2.2": "2 черга (2 підгрупа)",
+            "3.1": "3 черга (1 підгрупа)", "3.2": "3 черга (2 підгрупа)",
+            "4.1": "4 черга (1 підгрупа)", "4.2": "4 черга (2 підгрупа)",
+            "5.1": "5 черга (1 підгрупа)", "5.2": "5 черга (2 підгрупа)",
+            "6.1": "6 черга (1 підгрупа)", "6.2": "6 черга (2 підгрупа)",
+        };
+        
+        // Збираємо всі унікальні ID з таблиці
+        rows.forEach(row => {
+            if (row[COLUMN_GROUP_ID]) uniqueQueues.add(row[COLUMN_GROUP_ID]);
         });
-        return c;
-    }
 
-    function setGreenBattery() {
-        const f = document.getElementById('batteryFill');
-        const tip = document.querySelector('.battery-tip');
-        const label = document.getElementById('batteryLabel');
-        f.classList.remove('discharging');
-        f.style.width = "100%";
-        f.style.background = "linear-gradient(90deg, #1abc9c, #2ecc71)";
-        f.style.boxShadow = "0 0 15px #2ecc71";
-        if (tip) {
-            tip.style.background = "#2ecc71";
-            tip.style.boxShadow = "0 0 10px #2ecc71";
-        }
-        document.getElementById('batteryTimer').innerText = "";
-        clearInterval(countdownInterval);
-        label.innerText = "Відключення ще не заплановані";
-    }
+        // Сортуємо: спочатку правильні (1.1, 1.2...), потім все інше (сміття, дати тощо)
+        const sortedQueues = Array.from(uniqueQueues).sort((a, b) => {
+            const indexA = standardQueuesOrder.indexOf(a);
+            const indexB = standardQueuesOrder.indexOf(b);
+            // Якщо обидва стандартні - сортуємо за порядком
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            // Якщо один стандартний - він вище
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+            // Інше сортуємо як текст
+            return a.localeCompare(b);
+        });
 
-    function setBat(pct, isOn, customText = null) {
-        pct = Math.min(Math.max(pct, 0), 1);
-
-        const f = document.getElementById('batteryFill');
-        const label = document.getElementById('batteryLabel');
-        const tip = document.querySelector('.battery-tip');
-        
-        // 🔥 ПРАВИЛЬНА ПЕРЕВІРКА ТЕМИ (через атрибут, а не клас)
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const isLightMode = (currentTheme === 'light');
-
-        let visualPct;
-        let hue;
-
-        if (isOn) {
-            visualPct = pct;
-            hue = visualPct * 120; 
-            f.classList.add('discharging');
+        if (sortedQueues.length === 0) {
+            selector.innerHTML = '<option value="0">Даних не знайдено</option>';
         } else {
-            visualPct = 1 - pct;
-            hue = visualPct * 120;
-            f.classList.remove('discharging');
-        }
-
-        // Колір самої батарейки (завжди яскравий)
-        const batColor = `hsl(${hue}, 90%, 50%)`;
-        
-        f.style.width = Math.max(visualPct * 100, 0) + "%";
-        f.style.background = batColor;
-        f.style.boxShadow = `0 0 12px ${batColor}`;
-
-        if (tip) {
-            tip.style.background = batColor;
-        }
-
-        // 🔥 ЛОГІКА КОЛЬОРУ ТЕКСТУ
-        let textColor;
-        let textShadow;
-
-        if (isLightMode) {
-            // ⚪️ ДЛЯ СВІТЛОЇ ТЕМИ:
-            // Робимо темний, насичений колір (lightness 35%), щоб читалось на білому
-            textColor = `hsl(${hue}, 90%, 35%)`; 
-            textShadow = `none`; 
-        } else {
-            // ⚫️ ДЛЯ ТЕМНОЇ ТЕМИ:
-            // Яскравий неон
-            textColor = `hsl(${hue}, 90%, 50%)`;
-            textShadow = `0 0 10px hsla(${hue}, 90%, 50%, 0.6)`;
-        }
-
-        // Застосовуємо
-        label.style.color = textColor;
-        label.style.textShadow = textShadow;
-
-        if (customText) {
-            label.innerText = customText;
-        } else {
-            label.innerText = isOn ? "До відключення" : "До включення";
+            selector.innerHTML = sortedQueues.map(q => {
+                // Якщо для черги є гарний опис — беремо його, якщо ні — виводимо як є
+                const description = queueDescriptions[q] || `${q} (Нестандартна назва)`;
+                return `<option value="${q}">${description}</option>`;
+            }).join('');
         }
     }
 
+    // === 6. ІНІЦІАЛІЗАЦІЯ ===
 
-    function updateNativeShareLink() {
-        const text = `⚡️ Я користуюсь ботом для світла у Броварах. Моя черга ${currentQueue}. Приєднуйся!`;
-        const url = "https://t.me/SvitloBroBot";
-        document.getElementById("telegramShareNative").href = "https://t.me/share/url?url=" + encodeURIComponent(url) + "&text=" + encodeURIComponent(text);
-    }
-
-    function updateDonateUI(amount, goal) {
-        const target = goal > 0 ? goal : (amount > 0 ? amount * 1.2 : 5000);
-        let pct = (amount / target) * 100;
-        if (pct > 100) pct = 100;
-        const progress = document.getElementById('donateProgress');
-        if (progress) progress.style.width = `${pct}%`;
-        const fmtAmount = amount.toLocaleString('uk-UA', { maximumFractionDigits: 0 });
-        const fmtGoal = target.toLocaleString('uk-UA', { maximumFractionDigits: 0 });
-        const amountEl = document.getElementById('donateAmount');
-        if (amountEl) {
-            if (goal > 0) {
-                amountEl.innerText = `${fmtAmount} / ${fmtGoal} ₴`;
-            } else {
-                amountEl.innerText = `${fmtAmount} ₴`;
-            }
-        }
-    }
-
-function checkDonatePopup() {
-            // 1. Отримуємо сьогоднішню дату
-            const today = new Date().toLocaleDateString();
-
-            // 2. Дістаємо статистику з пам'яті
-            let data = JSON.parse(localStorage.getItem('launch_stats') || '{"date": "", "count": 0}');
-
-            // 3. Логіка лічильника
-            if (data.date !== today) {
-                data.date = today;
-                data.count = 1;
-            } else {
-                data.count++;
+    async function loadSheet() {
+        nextInfo.textContent = "⚙️ Завантаження...";
+        try {
+            const res = await fetch(SHEET_URL);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            const text = await res.text();
+            allRows = parseGviz(text);
+            
+            if (!allRows.length) {
+                nextInfo.textContent = "❌ Дані відсутні.";
+                return; 
             }
 
-            // Зберігаємо
-            localStorage.setItem('launch_stats', JSON.stringify(data));
+            updateQueueSelector(allRows);
 
-            // Умова: 2-й, 5-й або 8-й вхід за день
-            if (data.count === 2 || data.count === 5 || data.count === 8) {
-
-                // Затримка 7 секунд
-                setTimeout(() => {
-                    const overlay = document.getElementById('infoModal');
-                    const title = document.getElementById('infoTitle');
-                    const text = document.getElementById('infoText');
-
-                    title.innerText = "";
-
-                    text.innerHTML = `
-                        <div class="donate-hero">
-                            <span class="donate-emoji-big">💚</span>
-                            <h3 style="margin:0; color:var(--text-main); font-size:22px;">Підтримати проєкт</h3>
-
-                            <p style="font-size:14px; color:var(--text-muted); margin-top:12px; line-height:1.5;">
-                                Друзі, якщо наш бот допомагає вам орієнтуватись у графіках та вчасно отримувати сповіщення про світло — будемо вдячні за вашу підтримку.
-                            </p>
-                            <p style="font-size:14px; color:var(--text-muted); margin-top:8px; line-height:1.5;">
-                                Навіть невеликий внесок допомагає нам покривати витрати на сервери та розвиток проєкту.
-                            </p>
-                        </div>
-
-                        <a href="https://send.monobank.ua/jar/6qoHuhpGgD" target="_blank" class="btn-mono">
-                            <span style="font-size:20px">🐈‍⬛</span>
-                            <span>Monobank (Банка)</span>
-                        </a>
-
-                        <div class="donate-divider">або картка</div>
-
-                        <div class="card-copy-box" onclick="copyDonateCard(this)">
-                            <span class="cc-num">4874 1000 2226 7572</span>
-                            <span class="cc-icon">📋</span>
-                        </div>
-
-                        <p style="font-size:12px; color:var(--text-muted); text-align:center; margin-top:12px; opacity:0.6">
-                            Натисніть на номер, щоб скопіювати
-                        </p>
-                    `;
-
-                    overlay.classList.add('show');
-                    try { tg.HapticFeedback.notificationOccurred('success'); } catch(e){}
-                }, 7000);
+            const savedQueue = localStorage.getItem('currentQueue');
+            const avail = allRows.map(r => r[COLUMN_GROUP_ID]);
+            
+            if (savedQueue && avail.includes(savedQueue)) {
+                currentQueue = savedQueue;
+            } else if (avail.length > 0) {
+                currentQueue = avail[0];
             }
+
+            queueSelect.value = currentQueue;
+            queueShortLabel.textContent = `${currentQueue} черга`;
+            currentQueueLabel.textContent = `${currentQueue} черга`;
+            
+            nextInfo.textContent = "✅ Дані завантажено.";
+            makeTimeline(currentQueue, currentDayMode);
+
+        } catch (e) {
+            console.error(e);
+            nextInfo.textContent = "❌ Помилка завантаження.";
         }
-
-        function copyDonateCard(element) {
-            const cardNumber = "4874100022267572";
-            const numSpan = element.querySelector('.cc-num');
-            const iconSpan = element.querySelector('.cc-icon');
-
-            // Зберігаємо старий текст
-            const originalNum = numSpan ? numSpan.innerText : cardNumber;
-            const originalIcon = iconSpan ? iconSpan.innerText : "📋";
-
-            navigator.clipboard.writeText(cardNumber).then(() => {
-                // Ефект успіху
-                element.style.borderColor = "#2ecc71";
-                element.style.background = "rgba(46, 204, 113, 0.1)";
-
-                if(numSpan) numSpan.innerText = "Скопійовано! ✅";
-                if(iconSpan) iconSpan.innerText = "";
-
-                try { tg.HapticFeedback.notificationOccurred('success'); } catch(e){}
-
-                // Повертаємо назад через 2 сек
-                setTimeout(() => {
-                    element.style.borderColor = "rgba(255, 255, 255, 0.2)";
-                    element.style.background = "rgba(255, 255, 255, 0.08)";
-                    if(numSpan) numSpan.innerText = originalNum;
-                    if(iconSpan) iconSpan.innerText = originalIcon;
-                }, 2000);
-            });
-        }
-
-    function closeInfo() {
-        document.getElementById('infoModal').classList.remove('show');
     }
 
-    let currentDayNum = new Date().getDate();
-    setInterval(() => {
-        const now = new Date();
-        if (now.getDate() !== currentDayNum) { currentDayNum = now.getDate(); init(); }
-    }, 1000);
+    document.getElementById("year").textContent = new Date().getFullYear();
 
-    init();
+    // Перевірка теми при старті
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setDarkMode(true);
+    } else {
+        setDarkMode(false);
+    }
 
-        document.body.classList.add("no-anim");
+    themeToggle.addEventListener("click", toggleDarkMode);
+    
+    queueSelect.addEventListener("change", () => {
+        currentQueue = queueSelect.value;
+        localStorage.setItem('currentQueue', currentQueue);
+        queueShortLabel.textContent = `${currentQueue} черга`;
+        currentQueueLabel.textContent = `${currentQueue} черга`;
+        makeTimeline(currentQueue, currentDayMode);
+    });
 
-        setTimeout(() => {
-            document.body.classList.remove("no-anim");
-            fetchDonation();
+    document.getElementById("dayTabs").addEventListener("click", (e) => {
+        const btn = e.target.closest(".day-tab");
+        if (!btn) return;
+        document.querySelectorAll(".day-tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentDayMode = btn.dataset.day;
+        makeTimeline(currentQueue, currentDayMode);
+    });
 
-            // 👇 ЦЕЙ РЯДОК ОБОВ'ЯЗКОВО МАЄ БУТИ ТУТ:
-            checkDonatePopup();
-
-        }, 300);
-    </script>
+    loadSheet();
+</script>
 </body>
 </html>

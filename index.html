@@ -770,36 +770,47 @@
                 overflow: hidden;
             }
 
+            /* --- 🔥 ОНОВЛЕНА ШАПКА --- */
             .top-bar {
                 display: flex;
-                flex-wrap: wrap; /* 🔥 Це найважливіше для ремонту шапки */
-                gap: 12px;
+                align-items: center;       /* Центруємо по висоті */
+                justify-content: space-between; 
+                flex-wrap: nowrap;         /* 👈 ТЕПЕР МОЖНА В ОДИН РЯДОК! */
+                gap: 8px;
                 margin-bottom: 20px;
+                min-height: 44px;
+            }
+
+            .brand {
+                flex-shrink: 1; /* Логотип може трохи стиснутись, якщо треба */
+                min-width: 0;   /* Щоб текст не розпирав контейнер */
+            }
+            
+            /* На мобільному робимо підпис регіону меншим */
+            .brand-sub {
+                font-size: 10px;
+                white-space: nowrap;
+                opacity: 0.8;
             }
 
             .header-controls {
-                width: 100%;
+                flex-shrink: 0; /* Права частина не стискається */
                 display: flex;
-                justify-content: space-between;
                 align-items: center;
                 gap: 8px;
             }
 
             .region-chip {
-                flex: 1;
-                min-width: 0;
-                justify-content: center;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                font-size: 11px;
+                padding: 6px 10px;
+                white-space: nowrap; /* Текст в один рядок */
             }
+            /* ------------------------- */
 
-            /* Тут ми трохи зменшуємо картку для мобілки */
             .hero-card {
                 padding: 18px 16px;
             }
             
-            /* Тут зменшуємо шрифт заголовка */
             .hero-title {
                 font-size: 20px; 
             }
@@ -876,14 +887,14 @@
             </div>
             <div class="brand-text">
                 <div class="brand-name">SvitloUA</div>
-                <div class="brand-sub">Київщина</div>
+                <div class="brand-sub">Київська область</div>
             </div>
         </div>
 
         <div class="header-controls"> 
             <div class="region-chip">
                 <span class="region-dot"></span>
-                Київська область • онлайн-графік
+                Онлайн-графік
             </div>
             <button class="theme-switch" id="themeToggle" title="Перемкнути тему">
                 🌙

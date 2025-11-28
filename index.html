@@ -75,45 +75,39 @@
         }
         body { min-height: 100vh; display: flex; flex-direction: column; }
         .page {
-            max-width: 1120px; margin: 0 auto; padding: 20px 16px 32px; flex-grow: 1;
+            padding: 16px 12px 24px; /* Менші відступи по боках */
+            width: 100%;
         }
 
         /* HEADER */
         .top-bar {
             display: flex;
-            align-items: center; 
-            justify-content: space-between; 
+            flex-wrap: wrap; /* Дозволяємо перенос елементів */
             gap: 12px;
-            margin-bottom: 18px;
-            flex-wrap: wrap; 
+            margin-bottom: 20px;
         }
 
         .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
+            /* Логотип залишається зліва, але якщо треба - посунеться */
+            flex-grow: 1; 
+            margin-right: auto;
         }
-        
         .header-controls {
+                /* Панель з регіоном і темою переноситься на новий рядок */
+            width: 100%; 
             display: flex;
-            align-items: center; 
-            gap: 10px; 
-            flex-shrink: 0; 
-        }
-        
-        .region-chip {
-            display: inline-flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-            padding: 7px 11px;
-            border-radius: var(--radius-pill);
-            background: rgba(15,23,42,0.03);
-            border: 1px solid var(--border-subtle);
-            font-size: 11px;
-            color: var(--text-muted);
-            transition: background-color 0.3s;
-            flex-shrink: 0; 
+            gap: 8px;
+        }
+        .region-chip {
+                /* Цей елемент тепер гумовий, щоб не виштовхувати кнопку теми */
+            flex: 1; 
+            min-width: 0; /* Магія CSS: дозволяє тексту скорочуватись (...) */
+            justify-content: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .dark-mode .region-chip {
@@ -185,17 +179,8 @@
         }
         
         /* HERO */
-
         .hero-card {
-            background: linear-gradient(135deg, var(--surface-soft), var(--surface-soft));
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius-lg);
-            padding: 22px 20px 20px;
-            box-shadow: var(--shadow-soft);
-            border: 1px solid var(--border-subtle);
-            position: relative;
-            overflow: hidden;
-            transition: background 0.3s, border-color 0.3s;
+            padding: 18px 16px;
         }
 
         .dark-mode .hero-card {
@@ -771,61 +756,100 @@
         }
 
         /* MOBILE */
-/* MOBILE */
+/* MOBILE OPTIMIZATIONS */
         @media (max-width: 840px) {
-            .top-bar {
-                display: flex;       /* Вмикаємо рядок */
-                align-items: center; /* Рівняємо по центру висоти */
-                gap: 8px;            /* Відступи між елементами */
-                flex-wrap: nowrap;   /* Забороняємо перенос на новий рядок */
-                min-height: 50px;
-                padding-bottom: 0;
-            }
-
-            /* Прибираємо "обгортку" кнопок, щоб вони стали в один ряд з лого */
-            .header-controls {
-                display: contents;
-            }
-
-            /* Логотип: фіксований, не стискається */
-            .brand {
-                flex-shrink: 0;
-                margin: 0;
-                max-width: 45%; /* Обмеження, щоб не займав весь екран */
-            }
             
-            /* Відновлюємо підпис "Київщина" */
-            .brand-sub {
-                display: block;
+            html, body {
+                overflow-x: hidden;
+                width: 100%;
             }
 
-            /* Чіп: ГУМОВИЙ (займає все вільне місце посередині) */
+            .page {
+                padding: 16px 12px 24px;
+                width: 100%;
+                overflow: hidden;
+            }
+
+            .top-bar {
+                display: flex;
+                flex-wrap: wrap; /* 🔥 Це найважливіше для ремонту шапки */
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+
+            .header-controls {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 8px;
+            }
+
             .region-chip {
-                flex-grow: 1;    /* Росте, займаючи пустоту */
-                flex-shrink: 1;  /* Стискається, якщо місця мало */
-                min-width: 0;    /* Магія CSS: дозволяє стискатися менше контенту */
-                
-                /* Стиль тексту */
+                flex: 1;
+                min-width: 0;
+                justify-content: center;
                 white-space: nowrap;
                 overflow: hidden;
-                text-overflow: ellipsis; /* Три крапки, якщо не влазить */
-                
-                margin: 0;
-                padding: 6px 8px;
-                font-size: 10px; /* Трохи менший шрифт */
+                text-overflow: ellipsis;
+            }
+
+            /* Тут ми трохи зменшуємо картку для мобілки */
+            .hero-card {
+                padding: 18px 16px;
+            }
+            
+            /* Тут зменшуємо шрифт заголовка */
+            .hero-title {
+                font-size: 20px; 
+            }
+
+            .hero-controls {
+                flex-direction: column;
+                width: 100%;
+                gap: 8px;
+            }
+
+            .primary-btn, .secondary-pill {
+                width: 100%;
                 justify-content: center;
             }
 
-            /* Кнопка теми: фіксована справа */
-            .theme-switch {
-                flex-shrink: 0;
-                margin: 0;
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
             }
 
-            /* Зменшені відступи для контенту */
-            .hero-card { padding: 14px 16px 18px; }
-            .hero-title { font-size: 22px; }
-            .main-grid { grid-template-columns: 1fr; }
+            .timeline-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .day-tabs {
+                width: 100%;
+                display: flex;
+            }
+
+            .day-tab {
+                flex: 1;
+                justify-content: center;
+            }
+            
+            .timeline-segment {
+                font-size: 9px;
+                padding: 0 1px;
+            }
+
+            .queue-select, .select-wrapper, select {
+                width: 100%;
+            }
+            
+            footer {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
         }
     </style>
 </head>

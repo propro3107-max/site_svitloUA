@@ -755,7 +755,7 @@
             transition: color 0.3s;
         }
 
-/* MOBILE OPTIMIZATIONS (FINAL DESIGN) */
+/* MOBILE OPTIMIZATIONS (FIXED OVERLAP) */
         @media (max-width: 840px) {
             
             html, body {
@@ -776,49 +776,44 @@
                 align-items: center; 
                 justify-content: space-between; 
                 flex-wrap: nowrap; 
-                gap: 8px; 
-                margin-bottom: 24px; /* Трохи більше повітря знизу */
-                min-height: 46px;
+                gap: 12px; 
+                margin-bottom: 24px;
+                min-height: 44px;
             }
 
-            /* ЛІВА ЧАСТИНА (Лого + Текст) */
+            /* ЛІВА ЧАСТИНА */
             .brand {
                 display: flex;
                 align-items: center;
-                gap: 10px; /* Відступ між лого і текстом */
-                flex-shrink: 1; 
-                min-width: 0;
+                gap: 10px;
+                /* Забороняємо логотипу зникати */
+                flex-shrink: 0; 
+                min-width: 0; 
             }
 
             .brand-logo {
-                width: 36px; height: 36px; /* Оптимальний розмір */
+                width: 36px; height: 36px;
                 flex-shrink: 0;
             }
             .brand-logo svg { width: 22px; height: 22px; }
 
             .brand-text {
                 display: flex; 
-                flex-direction: column; /* Текст один під одним */
+                flex-direction: column; 
                 justify-content: center;
-                min-width: 0; 
-                line-height: 1; /* Щоб рядки не розліталися */
             }
 
             .brand-name {
                 font-size: 19px; 
                 font-weight: 800;
+                line-height: 1;
                 white-space: nowrap;
-                margin-bottom: 2px; /* Відступ до підпису */
+                display: block !important; /* Примусово показуємо */
             }
-
+            
+            /* 🔥 ВАЖЛИВО: Ховаємо підпис на телефоні, щоб звільнити місце */
             .brand-sub {
-                display: block; /* Показуємо підпис */
-                font-size: 10px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                opacity: 0.7;
-                white-space: nowrap;
+                display: none; 
             }
 
             /* ПРАВА ЧАСТИНА */
@@ -829,24 +824,21 @@
                 gap: 8px;
             }
             
-            /* Кнопка "Онлайн графік" */
             .region-chip {
                 padding: 6px 10px;
-                border-radius: 8px; /* Акуратні кути */
-                border: 1px solid rgba(34,197,94,0.3); /* Тонка зелена рамка */
-                background: rgba(34,197,94,0.08); /* Легкий фон */
-                font-size: 10px;
-                font-weight: 600;
+                border-radius: 8px;
+                border: 1px solid rgba(34,197,94,0.3);
+                background: rgba(34,197,94,0.08);
+                font-size: 11px;
+                font-weight: 700;
                 text-transform: uppercase;
-                letter-spacing: 0.03em;
                 color: #15803d;
-                white-space: nowrap;
                 display: flex;
                 align-items: center;
                 gap: 6px;
+                white-space: nowrap;
             }
 
-            /* Адаптація кольорів рамки для темної теми */
             .dark-mode .region-chip {
                 border-color: rgba(74, 222, 128, 0.25);
                 background: rgba(74, 222, 128, 0.05);
@@ -855,16 +847,17 @@
 
             .theme-switch {
                 width: 36px; height: 36px;
-                border-radius: 10px; /* Квадратніша кнопка (як в iOS) */
+                border-radius: 10px;
+                flex-shrink: 0;
             }
             
-            /* Якщо екран ДУЖЕ малий (iPhone SE 1st gen), зменшуємо шрифт */
-            @media (max-width: 350px) {
-                .brand-name { font-size: 16px; }
-                .region-chip { font-size: 9px; padding: 5px 8px; }
+            /* Якщо екран дуже вузький (iPhone SE), ховаємо і слово "Графік" */
+            @media (max-width: 360px) {
+                .chip-text { display: none; }
+                .region-chip { padding: 8px; }
             }
 
-            /* ІНШІ БЛОКИ */
+            /* ІНШІ СТИЛІ */
             .hero-card { padding: 18px 16px; }
             .hero-title { font-size: 20px; }
             .hero-controls { flex-direction: column; width: 100%; gap: 8px; }
@@ -901,13 +894,14 @@
             
             <div class="brand-text">
                 <div class="brand-name">SvitloUA</div>
-                <div class="brand-sub">Київщина</div> </div>
+                <div class="brand-sub">Київщина</div>
+            </div>
         </div>
 
         <div class="header-controls"> 
             <div class="region-chip">
                 <span class="region-dot"></span>
-                <span class="chip-text">Онлайн графік</span> </div>
+                <span class="chip-text">Графік</span> </div>
             <button class="theme-switch" id="themeToggle" title="Перемкнути тему">🌙</button>
         </div>
     </header>
